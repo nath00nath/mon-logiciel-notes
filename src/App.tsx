@@ -1131,9 +1131,9 @@ useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const userMeta = session.user.user_metadata;
-        // On récupère l'avatar et le nom peu importe la structure renvoyée par Google/Supabase
+        // Extraction robuste du nom et de la photo de profil (Google ou autre)
         const name = userMeta.full_name || userMeta.name || session.user.email || 'Utilisateur';
-        const avatarUrl = userMeta.avatar_url || userMeta.picture || userMeta.iss && userMeta.picture;
+        const avatarUrl = userMeta.avatar_url || userMeta.picture;
 
         setUser({
           name: name,
@@ -2666,7 +2666,7 @@ useEffect(() => {
                   className="menu-item"
                   onClick={() => {
                     setShowUserMenu(false);
-                    handleGoogleLogin(); // Relance la fenêtre Google pour changer de compte
+                    handleGoogleLogin();
                   }}
                 >
                   Changer de compte
