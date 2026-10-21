@@ -1103,7 +1103,7 @@ const handleGoogleLogin = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'http://localhost:5174'
+      redirectTo: 'https://snyyukojboitojcdcslr.supabase.co/auth/v1/callback',
     },
   });
   if (error) {
@@ -1133,6 +1133,7 @@ export default function App() {
 useEffect(() => {
     // Vérifier la session active au chargement
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Session chargée :", session); // Regarde dans la console (F12)
       if (session?.user) {
         const metadata = session.user.user_metadata;
         setUser({
@@ -1142,8 +1143,9 @@ useEffect(() => {
       }
     });
 
-    // Écouter les changements de connexion (connexion / déconnexion)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Écouter les changements de connexion
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Événement Auth :", event, session); // Permet de voir si l'événement SIGNED_IN se déclenche
       if (session?.user) {
         const metadata = session.user.user_metadata;
         setUser({
@@ -1158,7 +1160,7 @@ useEffect(() => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [user]);
 
   const [fontList, setFontList] = useState<string[]>(SYSTEM_FONTS);
   const [currentFontLabel, setCurrentFontLabel] = useState<string>('IBM Plex Sans');
