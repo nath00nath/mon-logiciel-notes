@@ -2610,7 +2610,14 @@ useEffect(() => {
           <div className={`top-menu-item${activeTopMenu === 'format' ? ' active' : ''}`} onClick={(e) => toggleTopMenu(e, 'format')}>Format</div>
           <div className={`top-menu-item${activeTopMenu === 'tools' ? ' active' : ''}`} onClick={(e) => toggleTopMenu(e, 'tools')}>Outils</div>
 
-          <div style={{ position: 'relative', marginLeft: 'auto' }}>
+          <div style={{ position: 'relative', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Nom affiché à gauche de l'avatar si connecté */}
+            {user && (
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#1e293b' }}>
+                {user.name}
+              </span>
+            )}
+
             <button
               onClick={() => {
                 if (!user) {
@@ -2620,8 +2627,8 @@ useEffect(() => {
                 }
               }}
               style={{
-                width: '26px',
-                height: '26px',
+                width: '30px',
+                height: '30px',
                 borderRadius: '50%',
                 border: '1px solid rgba(15, 23, 42, 0.2)',
                 background: 'rgba(255, 255, 255, 0.7)',
@@ -2629,7 +2636,6 @@ useEffect(() => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '0.75rem',
                 padding: 0,
                 overflow: 'hidden',
               }}
@@ -2642,14 +2648,15 @@ useEffect(() => {
               )}
             </button>
 
+            {/* Popup menu au clic si l'utilisateur est connecté */}
             {showUserMenu && user && (
               <div
                 className="glass menu"
                 style={{
                   position: 'absolute',
                   right: 0,
-                  top: '34px',
-                  minWidth: '180px',
+                  top: '36px',
+                  minWidth: '200px',
                   padding: '8px',
                   zIndex: 800,
                   background: '#ffffff',
@@ -2658,6 +2665,15 @@ useEffect(() => {
               >
                 <div style={{ padding: '8px 12px', fontSize: '0.8rem', fontWeight: 600, borderBottom: '1px solid rgba(15,23,42,0.1)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {user.name}
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    handleGoogleLogin(); // Relance la fenêtre Google pour changer de compte
+                  }}
+                >
+                  Changer de compte
                 </div>
                 <div
                   className="menu-item danger"
