@@ -1133,24 +1133,29 @@ export default function App() {
 useEffect(() => {
     // Vérifier la session active au chargement
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Session chargée :", session); // Regarde dans la console (F12)
       if (session?.user) {
-        const metadata = session.user.user_metadata;
+        const userMeta = session.user.user_metadata;
+        // On récupère l'avatar et le nom peu importe la structure renvoyée par Google/Supabase
+        const name = userMeta.full_name || userMeta.name || session.user.email || 'Utilisateur';
+        const avatarUrl = userMeta.avatar_url || userMeta.picture || userMeta.iss && userMeta.picture;
+
         setUser({
-          name: metadata.full_name || metadata.name || session.user.email || 'Utilisateur Google',
-          avatarUrl: metadata.avatar_url || metadata.picture || 'https://www.gravatar.com/avatar/?d=mp',
+          name: name,
+          avatarUrl: avatarUrl || 'https://www.gravatar.com/avatar/?d=mp',
         });
       }
     });
 
-    // Écouter les changements de connexion
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Événement Auth :", event, session); // Permet de voir si l'événement SIGNED_IN se déclenche
+    // Écouter les changements de connexion en direct
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const metadata = session.user.user_metadata;
+        const userMeta = session.user.user_metadata;
+        const name = userMeta.full_name || userMeta.name || session.user.email || 'Utilisateur';
+        const avatarUrl = userMeta.avatar_url || userMeta.picture;
+
         setUser({
-          name: metadata.full_name || metadata.name || session.user.email || 'Utilisateur Google',
-          avatarUrl: metadata.avatar_url || metadata.picture || 'https://www.gravatar.com/avatar/?d=mp',
+          name: name,
+          avatarUrl: avatarUrl || 'https://www.gravatar.com/avatar/?d=mp',
         });
       } else {
         setUser(null);
@@ -1160,7 +1165,7 @@ useEffect(() => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [user]);
+  }, []);
 
   const [fontList, setFontList] = useState<string[]>(SYSTEM_FONTS);
   const [currentFontLabel, setCurrentFontLabel] = useState<string>('IBM Plex Sans');
