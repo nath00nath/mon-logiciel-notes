@@ -4,8 +4,8 @@ const supabaseUrl = 'https://snyyukojboitojcdcslr.supabase.co';
 const supabaseKey = 'sb_publishable_ctp4lglddxegp0A2a-iTGQ_z_w4qbof';
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
-import type { CSSProperties, FormEvent, HTMLAttributes, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { ChangeEvent, CSSProperties, FormEvent, MouseEvent as ReactMouseEvent } from 'react';
 
 interface Tab {
   id: string;
@@ -194,7 +194,7 @@ const htmlToMarkdown = (html: string): string => {
   const pushBlock = (el: HTMLElement) => {
     const tag = el.tagName.toLowerCase();
     const text = Array.from(el.childNodes).map(inline).join('').trim();
-    if (/^h[1-3]\$/.test(tag)) blocks.push(`${'#'.repeat(Number(tag[1]))} ${text}`);
+    if (/^h[1-3]$/.test(tag)) blocks.push(`${'#'.repeat(Number(tag[1]))} ${text}`);
     else if (tag === 'blockquote') blocks.push(text.split('\n').map((l) => `> ${l}`).join('\n'));
     else if (tag === 'ul') {
       blocks.push(
@@ -1095,28 +1095,6 @@ const computeSplit = (widths: number[], c: number, n: number) => {
   return null;
 };
 
-const ROLL_OPEN_MS = 360;
-const ROLL_CLOSE_MS = 300;
-const ROLLER_H = 14;
-
-const handleGoogleLogin = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: 'https://snyyukojboitojcdcslr.supabase.co/auth/v1/callback',
-    },
-  });
-  if (error) {
-    alert("Erreur de connexion Google : " + error.message);
-  }
-};
-
-const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setCurrentView('editor');
-  };
-
 export default function App() {
   const [saved] = useState<SavedState>(loadSavedState);
   const [folders, setFolders] = useState<Folder[]>(saved.folders);
@@ -1129,6 +1107,24 @@ export default function App() {
   const [activeFolderId, setActiveFolderId] = useState<string>(saved.activeFolderId);
   const [activeNoteId, setActiveNoteId] = useState<string>(saved.activeNoteId);
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>(saved.collapsedFolders);
+
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) {
+      alert('Erreur de connexion Google : ' + error.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setCurrentView('editor');
+  };
 
 useEffect(() => {
     // Vérifier la session active au chargement
@@ -1499,7 +1495,7 @@ useEffect(() => {
       h.stack[h.index] = snap;
     } else {
       h.stack = h.stack.slice(0, h.index + 1);
-      h.push(snap);
+      h.stack.push(snap);
       if (h.stack.length > 300) h.stack.shift();
       h.index = h.stack.length - 1;
     }
@@ -1600,7 +1596,7 @@ useEffect(() => {
     setDropdown(null);
   };
 
-  const handleFontUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFontUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const input = e.target;
     const file = input.files?.[0];
     if (!file) return;
