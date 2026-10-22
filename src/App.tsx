@@ -137,7 +137,8 @@ const loadSavedState = (): SavedState => {
     collapsedFolders: {},
   };
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    // Utilisation de sessionStorage : survit au rafraîchissement, s'efface à la fermeture de l'onglet
+    const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return fallback;
     const data = JSON.parse(raw);
     if (!Array.isArray(data.folders)) return fallback;
@@ -1417,7 +1418,7 @@ export default function App() {
       } else {
         // Sauvegarde dans le localStorage uniquement quand on est hors ligne / invité
         try {
-          localStorage.setItem(
+          sessionStorage.setItem(
             STORAGE_KEY,
             JSON.stringify({
               folders,
