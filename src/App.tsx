@@ -1431,7 +1431,6 @@ export default function App() {
   useEffect(() => {
     const t = window.setTimeout(async () => {
       if (user) {
-        // Récupérer l'identifiant officiel Supabase pour écrire dans la base
         const { data: { user: authUser } } = await supabase.auth.getUser();
         const targetId = authUser?.id || user.id;
 
@@ -1450,7 +1449,6 @@ export default function App() {
           }
         }
       } else {
-        // Mode invité : sauvegarde temporaire en sessionStorage
         try {
           sessionStorage.setItem(
             STORAGE_KEY,
