@@ -1255,8 +1255,9 @@ export default function App() {
     let isMounted = true;
 
     const syncWithCloud = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      const currentUid = authUser?.id || user?.id;
+      // On récupère directement la session authentifiée officielle
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUid = session?.user?.id || user?.id;
 
       if (!currentUid) return;
 
@@ -1278,15 +1279,15 @@ export default function App() {
         if (data.active_folder_id) setActiveFolderId(data.active_folder_id);
         if (data.active_note_id) setActiveNoteId(data.active_note_id);
         if (data.collapsed_folders) setCollapsedFolders(data.collapsed_folders);
-      } else {
-        await supabase.from('user_data').upsert({
-          user_id: currentUid,
-          folders,
-          active_folder_id: activeFolderId,
-          active_note_id: activeNoteId,
-          collapsed_folders: collapsedFolders,
-          updated_at: new Date().toISOString(),
-        });
+
+        // Mise à jour immédiate de l'éditeur avec la note active chargée depuis Supabase
+        const activeF = data.folders.find((f: any) => f.id === (data.active_folder_id || '1')) || data.folders[0];
+        const activeN = activeF?.notes?.find((n: any) => n.id === (data.active_note_id || 'n1')) || activeF?.notes?.[0];
+        const activeT = activeN?.tabs?.find((t: any) => t.id === activeN?.activeTabId) || activeN?.tabs?.[0];
+
+        if (editorRef.current && activeT) {
+          editorRef.current.innerHTML = activeT.content || '';
+        }
       }
     };
 
@@ -2833,17 +2834,17 @@ export default function App() {
                 }
               }}
               style={{
-                width: '32px',
-                height: '32px',
+                width: '26px',
+                height: '26px',
                 borderRadius: '50%',
                 border: user ? '1.5px solid #2563eb' : '1px solid rgba(15, 23, 42, 0.2)',
                 background: '#ffffff',
-                padding: '2px',
+                padding: '1.5px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)',
+                boxShadow: '0 2px 5px rgba(15, 23, 42, 0.08)',
               }}
               title={user ? `${user.name} (Connecté)` : 'Se connecter'}
             >
@@ -2879,18 +2880,18 @@ export default function App() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 8px 10px 8px', borderBottom: '1px solid rgba(15,23,42,0.08)', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 8px 10px 8px', borderBottom: '1px solid rgba(15,23,42,0.08)', marginBottom: '6px' }}>
                   <img
                     src={user.avatarUrl}
                     alt={user.name}
                     referrerPolicy="no-referrer"
-                    style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
                   />
-                  <div style={{ overflow: 'hidden', minWidth: 0 }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 650, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ overflow: 'hidden', minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 650, color: '#0f172a', lineHeight: '1.2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {user.name}
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: '#16a34a', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 500, whiteSpace: 'nowrap', marginTop: '2px' }}>
                       ● Connecté via Google
                     </div>
                   </div>
@@ -2904,7 +2905,13 @@ export default function App() {
                   }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="16 3 21 3 21 8" />
+                      <line x1="4" y1="20" x2="21" y2="3" />
+                      <polyline points="21 16 21 21 16 21" />
+                      <line x1="15" y1="15" x2="21" y2="21" />
+                      <line x1="4" y1="4" x2="9" y2="9" />
+                    </svg>
                     Changer de compte
                   </span>
                 </div>
