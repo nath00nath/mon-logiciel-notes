@@ -1842,11 +1842,12 @@ export default function App() {
     const ed = editorRef.current;
     if (!ed) return;
 
-    // On verrouille l'écouteur selectionchange pendant l'opération
     ignoreSelectionChangeRef.current = true;
 
     if (document.activeElement !== ed) {
       restoreSelection();
+    } else {
+      ed.focus();
     }
 
     if (!ed.innerHTML.trim() || ed.innerHTML === '<br>') {
@@ -1863,58 +1864,71 @@ export default function App() {
       ignoreSelectionChangeRef.current = false;
       checkSelectionFormat();
     } else {
+      // 1. On calcule exactement quels outils doivent être actifs après ce clic
+      const nextBold = command === 'bold' ? !isBold : isBold;
+      const nextItalic = command === 'italic' ? !isItalic : isItalic;
+      const nextUnderline = command === 'underline' ? !isUnderline : isUnderline;
+      const nextStrike = command === 'strikeThrough' ? !isStrike : isStrike;
+
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
-        if (range.collapsed) {
-          const container = range.startContainer;
-          const offset = range.startOffset;
 
-          // Si on a déjà notre caractère invisible juste avant le curseur, on le réutilise
-          if (container.nodeType === Node.TEXT_NODE && container.textContent?.slice(offset - 1, offset) === '\u200B') {
-            const tempRange = document.createRange();
-            tempRange.setStart(container, offset - 1);
-            tempRange.setEnd(container, offset);
-            sel.removeAllRanges();
-            sel.addRange(tempRange);
-            document.execCommand(command, false);
-            const endRange = document.createRange();
-            endRange.setStart(sel.focusNode || container, sel.focusOffset);
-            endRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(endRange);
-          } else if (
-            container.nodeType === Node.TEXT_NODE &&
-            offset > 0 &&
-            offset < (container.textContent?.length || 0)
-          ) {
-            // Au milieu d'un mot existant
-            document.execCommand(command, false);
-          } else {
-            // Dans le vide ou en fin de ligne : on crée une ancre invisible \u200B pour empiler les balises HTML
-            const zwsp = document.createTextNode('\u200B');
-            range.insertNode(zwsp);
-            const tempRange = document.createRange();
-            tempRange.selectNode(zwsp);
-            sel.removeAllRanges();
-            sel.addRange(tempRange);
-            document.execCommand(command, false);
-            const endRange = document.createRange();
-            endRange.setStart(zwsp, 1);
-            endRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(endRange);
+        if (range.collapsed) {
+          // Si le curseur est déjà posé sur une ancre invisible \u200B (sans vrai texte tapé),
+          // on nettoie l'ancienne structure d'ancrage pour la reconstruire proprement
+          const container = range.startContainer;
+          if (container.nodeType === Node.TEXT_NODE && container.textContent === '\u200B') {
+            let topInline: Node = container;
+            while (
+              topInline.parentNode &&
+              topInline.parentNode !== ed &&
+              ['B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL'].includes(
+                (topInline.parentNode as HTMLElement).tagName
+              )
+            ) {
+              topInline = topInline.parentNode;
+            }
+            const parent = topInline.parentNode;
+            if (parent) {
+              const idx = Array.from(parent.childNodes).indexOf(topInline as ChildNode);
+              parent.removeChild(topInline);
+              const cleanRange = document.createRange();
+              cleanRange.setStart(parent, idx);
+              cleanRange.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(cleanRange);
+            }
           }
+
+          // Construction de la nouvelle pile de balises correspondant aux boutons actifs
+          const activeRange = sel.getRangeAt(0);
+          const zwsp = document.createTextNode('\u200B');
+          let currentNode: Node = zwsp;
+
+          if (nextStrike) { const s = document.createElement('s'); s.appendChild(currentNode); currentNode = s; }
+          if (nextUnderline) { const u = document.createElement('u'); u.appendChild(currentNode); currentNode = u; }
+          if (nextItalic) { const i = document.createElement('i'); i.appendChild(currentNode); currentNode = i; }
+          if (nextBold) { const b = document.createElement('b'); b.appendChild(currentNode); currentNode = b; }
+
+          activeRange.insertNode(currentNode);
+
+          // On verrouille le curseur pile après le caractère invisible à l'intérieur des balises
+          const caretRange = document.createRange();
+          caretRange.setStart(zwsp, 1);
+          caretRange.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(caretRange);
         } else {
-          // Si du texte est sélectionné normalement
+          // Si du texte est surligné, fonctionnement standard
           document.execCommand(command, false);
         }
       }
 
-      if (command === 'bold') setIsBold((prev) => !prev);
-      if (command === 'italic') setIsItalic((prev) => !prev);
-      if (command === 'underline') setIsUnderline((prev) => !prev);
-      if (command === 'strikeThrough') setIsStrike((prev) => !prev);
+      setIsBold(nextBold);
+      setIsItalic(nextItalic);
+      setIsUnderline(nextUnderline);
+      setIsStrike(nextStrike);
 
       saveCurrentSelection();
       setTimeout(() => {
