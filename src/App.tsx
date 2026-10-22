@@ -1108,7 +1108,7 @@ export default function App() {
   const [folders, setFolders] = useState<Folder[]>(saved.folders);
   const [currentView, setCurrentView] = useState<'editor' | 'account'>('editor');
   const [isSignUp, setIsSignUp] = useState<boolean>(false);
-  const [user, setUser] = useState<{ name: string; avatarUrl: string; email?: string } | null>(() => {
+  const [user, setUser] = useState<{ id?: string; name: string; avatarUrl: string; email?: string } | null>(() => {
     try {
       const cached = localStorage.getItem('ksiazka-google-user');
       return cached ? JSON.parse(cached) : null;
@@ -1146,7 +1146,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    const saveAndSetUser = (u: { name: string; avatarUrl: string; email?: string }) => {
+    const saveAndSetUser = (u: { id?: string; name: string; avatarUrl: string; email?: string }) => {
       setUser(u);
       localStorage.setItem('ksiazka-google-user', JSON.stringify(u));
       setCurrentView('editor');
@@ -1168,10 +1168,10 @@ export default function App() {
         identityData.avatar_url ||
         identityData.picture ||
         'https://www.gravatar.com/avatar/?d=mp';
-      return { name, avatarUrl, email: u.email };
+      return { id: u.id, name, avatarUrl, email: u.email };
     };
 
-    // 1. Lecture directe et infaillible du #access_token dans l'URL au retour de Google
+    // 1. Lecture du jeton Google dans l'URL
     const hash = window.location.hash;
     if (hash && hash.includes('access_token=')) {
       try {
@@ -1180,7 +1180,6 @@ export default function App() {
         const refreshToken = hashParams.get('refresh_token');
 
         if (accessToken) {
-          // Décoder le payload JWT (en base64url) pour extraire tout de suite le nom et la photo Google
           const base64Url = accessToken.split('.')[1];
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
           const jsonPayload = decodeURIComponent(
@@ -1193,6 +1192,7 @@ export default function App() {
           const meta = payload.user_metadata || {};
 
           saveAndSetUser({
+            id: payload.sub,
             name: meta.full_name || meta.name || payload.email?.split('@')[0] || 'Utilisateur',
             avatarUrl: meta.avatar_url || meta.picture || 'https://www.gravatar.com/avatar/?d=mp',
             email: payload.email,
@@ -1208,14 +1208,14 @@ export default function App() {
       }
     }
 
-    // 2. Récupérer la session Supabase normale si elle existe
+    // 2. Session active Supabase
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         saveAndSetUser(extractUser(session.user));
       }
     });
 
-    // 3. Écouter les changements de connexion
+    // 3. Changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         saveAndSetUser(extractUser(session.user));
@@ -1228,7 +1228,31 @@ export default function App() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);;
+  }, []);
+
+  // Charger les notes depuis Supabase dès qu'un utilisateur est connecté
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const loadCloudData = async () => {
+      const { data, error } = await supabase
+        .from('user_data')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!error && data) {
+        if (Array.isArray(data.folders) && data.folders.length > 0) {
+          setFolders(data.folders);
+        }
+        if (data.active_folder_id) setActiveFolderId(data.active_folder_id);
+        if (data.active_note_id) setActiveNoteId(data.active_note_id);
+        if (data.collapsed_folders) setCollapsedFolders(data.collapsed_folders);
+      }
+    };
+
+    loadCloudData();
+  }, [user?.id]);
 
   const [fontList, setFontList] = useState<string[]>(SYSTEM_FONTS);
   const [currentFontLabel, setCurrentFontLabel] = useState<string>('IBM Plex Sans');
@@ -1370,7 +1394,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    const t = window.setTimeout(() => {
+    const t = window.setTimeout(async () => {
+      // 1. Sauvegarde locale de secours
       try {
         localStorage.setItem(
           STORAGE_KEY,
@@ -1385,9 +1410,22 @@ export default function App() {
       } catch {
         setSaveError(true);
       }
-    }, 300);
+
+      // 2. Sauvegarde sur Supabase si connecté
+      if (user?.id) {
+        await supabase.from('user_data').upsert({
+          user_id: user.id,
+          folders,
+          active_folder_id: activeFolderId,
+          active_note_id: activeNoteId,
+          collapsed_folders: collapsedFolders,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    }, 500);
+
     return () => window.clearTimeout(t);
-  }, [folders, activeFolderId, activeNoteId, collapsedFolders]);
+  }, [folders, activeFolderId, activeNoteId, collapsedFolders, user?.id]);
 
   useEffect(() => {
     const styleTag = document.createElement('style');
