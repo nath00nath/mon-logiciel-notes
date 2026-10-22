@@ -1619,26 +1619,12 @@ export default function App() {
       if (!isNaN(px)) setFontSize(px);
     }
 
-    // Détection précise de l'état du texte exactement là où se trouve le curseur
+    // Détection de l'état natif par le navigateur
     setIsBold(document.queryCommandState('bold'));
     setIsItalic(document.queryCommandState('italic'));
     setIsUnderline(document.queryCommandState('underline'));
     setIsStrike(document.queryCommandState('strikeThrough'));
-    // On met à jour uniquement si l'état change pour éviter tout clignotement inutile
-    const boldState = document.queryCommandState('bold');
-    setIsBold(prev => prev !== boldState ? boldState : prev);
-
-    const italicState = document.queryCommandState('italic');
-    setIsItalic(prev => prev !== italicState ? italicState : prev);
-
-    const underlineState = document.queryCommandState('underline');
-    setIsUnderline(prev => prev !== underlineState ? underlineState : prev);
-
-    const strikeState = document.queryCommandState('strikeThrough');
-    setIsStrike(prev => prev !== strikeState ? strikeState : prev);
-
-    const listState = document.queryCommandState('insertUnorderedList');
-    setIsBulletList(prev => prev !== listState ? listState : prev);
+    setIsBulletList(document.queryCommandState('insertUnorderedList'));
 
     // Détection dynamique de l'alignement sous le curseur
       if (node && node instanceof HTMLElement) {
@@ -1866,18 +1852,18 @@ export default function App() {
     if (command === 'formatBlock') {
       const currentBlock = (document.queryCommandValue('formatBlock') || '').toLowerCase();
       document.execCommand('formatBlock', false, currentBlock === 'blockquote' ? 'p' : 'blockquote');
+      checkSelectionFormat();
     } else {
       document.execCommand(command, false);
       
-      // On force le basculement manuel de l'état du bouton pour qu'il obéisse toujours
+      // On bascule l'état localement et on ignore checkSelectionFormat pour ne pas 
+      // que le navigateur écrase notre choix si la ligne est vide.
       if (command === 'bold') setIsBold(prev => !prev);
       if (command === 'italic') setIsItalic(prev => !prev);
       if (command === 'underline') setIsUnderline(prev => !prev);
       if (command === 'strikeThrough') setIsStrike(prev => !prev);
     }
 
-    // Utilisation de la fonction unifiée pour tout mettre à jour
-    checkSelectionFormat();
     handleContentChange();
   };
 
@@ -4097,12 +4083,11 @@ export default function App() {
                      const command = k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline';
                      document.execCommand(command, false);
                      
-                     // Synchronise l'UI manuellement avec le raccourci clavier
+                     // Synchronise l'UI manuellement sans appeler checkSelectionFormat
                      if (command === 'bold') setIsBold(prev => !prev);
                      if (command === 'italic') setIsItalic(prev => !prev);
                      if (command === 'underline') setIsUnderline(prev => !prev);
                      
-                     checkSelectionFormat();
                      handleContentChange();
                     }
                     else if (!e.shiftKey && k === 'k') handleInsertLink(e);
