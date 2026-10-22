@@ -1110,16 +1110,18 @@ export default function App() {
   const [user, setUser] = useState<{ name: string; avatarUrl: string } | null>(null);
 
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const [activeFolderId, setActiveFolderId] = useState<string>(saved.activeFolderId);
   const [activeNoteId, setActiveNoteId] = useState<string>(saved.activeNoteId);
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>(saved.collapsedFolders);
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async (forceSelectAccount = false) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: window.location.origin,
+        queryParams: forceSelectAccount ? { prompt: 'select_account' } : undefined,
       },
     });
     if (error) {
@@ -1130,36 +1132,56 @@ export default function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setShowUserMenu(false);
     setCurrentView('editor');
   };
 
-useEffect(() => {
-    // Vérifier la session active au chargement
+  useEffect(() => {
+    const extractUser = (u: any) => {
+      const meta = u.user_metadata || {};
+      const identityData = u.identities?.[0]?.identity_data || {};
+      const name =
+        meta.full_name ||
+        meta.name ||
+        identityData.full_name ||
+        identityData.name ||
+        u.email?.split('@')[0] ||
+        'Utilisateur';
+      const avatarUrl =
+        meta.avatar_url ||
+        meta.picture ||
+        identityData.avatar_url ||
+        identityData.picture ||
+        'https://www.gravatar.com/avatar/?d=mp';
+      return { name, avatarUrl, email: u.email };
+    };
+
+    // Vérifier s'il y a une erreur renvoyée par Supabase dans l'URL
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const errDesc = params.get('error_description') || hashParams.get('error_description');
+    if (errDesc) {
+      console.error('Erreur Auth Supabase:', errDesc);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // 1. Récupérer la session active au chargement
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const userMeta = session.user.user_metadata;
-        // Extraction robuste du nom et de la photo de profil (Google ou autre)
-        const name = userMeta.full_name || userMeta.name || session.user.email || 'Utilisateur';
-        const avatarUrl = userMeta.avatar_url || userMeta.picture;
-
-        setUser({
-          name: name,
-          avatarUrl: avatarUrl || 'https://www.gravatar.com/avatar/?d=mp',
-        });
+        setUser(extractUser(session.user));
+        setCurrentView('editor');
       }
     });
 
-    // Écouter les changements de connexion en direct
+    // 2. Écouter en temps réel la connexion / déconnexion
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const userMeta = session.user.user_metadata;
-        const name = userMeta.full_name || userMeta.name || session.user.email || 'Utilisateur';
-        const avatarUrl = userMeta.avatar_url || userMeta.picture;
-
-        setUser({
-          name: name,
-          avatarUrl: avatarUrl || 'https://www.gravatar.com/avatar/?d=mp',
-        });
+        setUser(extractUser(session.user));
+        setCurrentView('editor');
+        // Nettoyer l'URL si elle contient des résidus OAuth
+        if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
       } else {
         setUser(null);
       }
@@ -1341,7 +1363,16 @@ useEffect(() => {
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target?.closest('.picker') || target?.closest('.menu') || target?.closest('.table-picker-pop') || target?.closest('.tp-cell') || target?.closest('.tb-btn') || target?.closest('.tb-custom-trigger') || target?.closest('.size-box')) {
+      if (
+        target?.closest('.picker') ||
+        target?.closest('.menu') ||
+        target?.closest('.user-menu-container') ||
+        target?.closest('.table-picker-pop') ||
+        target?.closest('.tp-cell') ||
+        target?.closest('.tb-btn') ||
+        target?.closest('.tb-custom-trigger') ||
+        target?.closest('.size-box')
+      ) {
         return;
       }
       setContextMenu(null);
@@ -1350,6 +1381,7 @@ useEffect(() => {
       setDropdown(null);
       setActiveTopMenu(null);
       setShowTablePicker(false);
+      setShowUserMenu(false);
       if (!target?.closest('td') && !target?.closest('th')) {
         clearCellSelection();
       }
@@ -2613,81 +2645,155 @@ useEffect(() => {
           <div className={`top-menu-item${activeTopMenu === 'format' ? ' active' : ''}`} onClick={(e) => toggleTopMenu(e, 'format')}>Format</div>
           <div className={`top-menu-item${activeTopMenu === 'tools' ? ' active' : ''}`} onClick={(e) => toggleTopMenu(e, 'tools')}>Outils</div>
 
-          <div style={{ position: 'relative', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Nom affiché à gauche de l'avatar si connecté */}
+          <div className="user-menu-container" style={{ position: 'relative', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
             {user && (
               <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#1e293b' }}>
                 {user.name}
               </span>
             )}
-
+{showSettingsModal && (
+        <div className="overlay" onClick={() => setShowSettingsModal(false)}>
+          <div className="glass modal" style={{ width: '400px' }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', textAlign: 'center', fontWeight: 600 }}>
+              Paramètres du compte
+            </h3>
+            {user && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(15,23,42,0.04)', marginBottom: '16px' }}>
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  referrerPolicy="no-referrer"
+                  style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
+                />
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#0f172a' }}>{user.name}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>Synchronisation Google active</div>
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+              <button
+                className="m-btn"
+                style={{ width: '100%', textAlign: 'left' }}
+                onClick={() => {
+                  setShowSettingsModal(false);
+                  handleGoogleLogin(true);
+                }}
+              >
+                🔄 Changer de compte Google
+              </button>
+              <button
+                className="m-btn"
+                style={{ width: '100%', textAlign: 'left', color: '#ef4444' }}
+                onClick={() => {
+                  setShowSettingsModal(false);
+                  handleLogout();
+                }}
+              >
+                🚪 Se déconnecter
+              </button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="m-btn primary" onClick={() => setShowSettingsModal(false)}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
             <button
               onClick={() => {
                 if (!user) {
                   setCurrentView('account');
                 } else {
-                  setShowUserMenu(!showUserMenu);
+                  setShowUserMenu((prev) => !prev);
                 }
               }}
               style={{
                 width: '30px',
                 height: '30px',
                 borderRadius: '50%',
-                border: '1px solid rgba(15, 23, 42, 0.2)',
-                background: 'rgba(255, 255, 255, 0.7)',
+                border: user ? '2px solid #2563eb' : '1px solid rgba(15, 23, 42, 0.2)',
+                background: 'rgba(255, 255, 255, 0.85)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: 0,
                 overflow: 'hidden',
+                boxShadow: '0 2px 6px rgba(15, 23, 42, 0.1)',
               }}
-              title={user ? user.name : "Mon compte"}
+              title={user ? `${user.name} (Connecté)` : 'Se connecter'}
             >
               {user ? (
-                <img src={user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  referrerPolicy="no-referrer"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = 'https://www.gravatar.com/avatar/?d=mp';
+                  }}
+                />
               ) : (
                 '👤'
               )}
             </button>
 
-            {/* Popup menu au clic si l'utilisateur est connecté */}
-            {/* Popup menu au clic si l'utilisateur est connecté */}
+            {/* Menu Pop-up au clic sur l'avatar */}
             {showUserMenu && user && (
               <div
                 className="glass menu"
                 style={{
                   position: 'absolute',
                   right: 0,
-                  top: '36px',
-                  minWidth: '200px',
+                  top: '38px',
+                  minWidth: '215px',
                   padding: '8px',
-                  zIndex: 800,
+                  zIndex: 950,
                   background: '#ffffff',
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div style={{ padding: '8px 12px', fontSize: '0.8rem', fontWeight: 600, borderBottom: '1px solid rgba(15,23,42,0.1)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {user.name}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderBottom: '1px solid rgba(15,23,42,0.1)', marginBottom: '6px' }}>
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    referrerPolicy="no-referrer"
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                  />
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {user.name}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 500 }}>
+                      ● Connecté avec Google
+                    </div>
+                  </div>
                 </div>
+
                 <div
                   className="menu-item"
                   onClick={() => {
                     setShowUserMenu(false);
-                    handleGoogleLogin();
+                    handleGoogleLogin(true);
                   }}
                 >
-                  Changer de compte
+                  <span>🔄 Changer de compte</span>
                 </div>
+
                 <div
                   className="menu-item"
                   onClick={() => {
                     setShowUserMenu(false);
-                    alert("Ouverture des paramètres");
+                    setShowSettingsModal(true);
                   }}
                 >
-                  Paramètres
+                  <span>⚙️ Paramètres</span>
                 </div>
+
+                <div style={{ height: '1px', background: 'rgba(15,23,42,0.08)', margin: '4px 0' }} />
+
                 <div
                   className="menu-item danger"
                   onClick={() => {
@@ -2695,7 +2801,7 @@ useEffect(() => {
                     handleLogout();
                   }}
                 >
-                  Se déconnecter
+                  <span>🚪 Se déconnecter</span>
                 </div>
               </div>
             )}
@@ -3237,7 +3343,7 @@ useEffect(() => {
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="m-btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.8rem', background: '#fff' }} onClick={handleGoogleLogin}>
+              <button className="m-btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.8rem', background: '#fff' }} onClick={() => handleGoogleLogin(false)}>
                 Google
               </button>
             </div>
