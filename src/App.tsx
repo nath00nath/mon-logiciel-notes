@@ -1142,6 +1142,11 @@ export default function App() {
     await supabase.auth.signOut();
     setUser(null);
     setShowUserMenu(false);
+    // Réinitialiser les dossiers et notes par défaut
+    setFolders(DEFAULT_FOLDERS);
+    setActiveFolderId('1');
+    setActiveNoteId('n1');
+    setCollapsedFolders({});
     setCurrentView('editor');
   };
 
@@ -1222,6 +1227,10 @@ export default function App() {
       } else if (event === 'SIGNED_OUT') {
         localStorage.removeItem('ksiazka-google-user');
         setUser(null);
+        setFolders(DEFAULT_FOLDERS);
+        setActiveFolderId('1');
+        setActiveNoteId('n1');
+        setCollapsedFolders({});
       }
     });
 
@@ -1395,24 +1404,8 @@ export default function App() {
 
   useEffect(() => {
     const t = window.setTimeout(async () => {
-      // 1. Sauvegarde locale de secours
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            folders,
-            activeFolderId,
-            activeNoteId,
-            collapsedFolders,
-          } satisfies SavedState)
-        );
-        setSaveError(false);
-      } catch {
-        setSaveError(true);
-      }
-
-      // 2. Sauvegarde sur Supabase si connecté
       if (user?.id) {
+        // Sauvegarde sur Supabase uniquement quand on est connecté
         await supabase.from('user_data').upsert({
           user_id: user.id,
           folders,
@@ -1421,6 +1414,22 @@ export default function App() {
           collapsed_folders: collapsedFolders,
           updated_at: new Date().toISOString(),
         });
+      } else {
+        // Sauvegarde dans le localStorage uniquement quand on est hors ligne / invité
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              folders,
+              activeFolderId,
+              activeNoteId,
+              collapsedFolders,
+            } satisfies SavedState)
+          );
+          setSaveError(false);
+        } catch {
+          setSaveError(true);
+        }
       }
     }, 500);
 
