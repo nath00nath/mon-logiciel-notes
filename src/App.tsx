@@ -1833,11 +1833,12 @@ export default function App() {
   };
 
   const formatText = (e: ReactMouseEvent, command: string) => {
-    e.preventDefault();
+    e.preventDefault(); // Empêche l'éditeur de perdre son focus
     const ed = editorRef.current;
     if (!ed) return;
-    ed.focus();
-    restoreSelection();
+
+    // Suppression de ed.focus() et restoreSelection() pour éviter les conflits
+    // de sélection. Le focus natif du navigateur reste intact.
 
     if (!ed.innerHTML.trim() || ed.innerHTML === '<br>') {
       const p = document.createElement('p');
@@ -1854,12 +1855,8 @@ export default function App() {
       document.execCommand(command, false);
     }
 
-    setIsBold(document.queryCommandState('bold'));
-    setIsItalic(document.queryCommandState('italic'));
-    setIsUnderline(document.queryCommandState('underline'));
-    setIsStrike(document.queryCommandState('strikeThrough'));
-
-    saveCurrentSelection();
+    // Utilisation de la fonction unifiée pour tout mettre à jour
+    checkSelectionFormat();
     handleContentChange();
   };
 
