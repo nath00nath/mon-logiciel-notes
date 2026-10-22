@@ -1743,7 +1743,7 @@ export default function App() {
     const editor = editorRef.current;
     if (!editor || !activeNote || !activeFolder || !activeTab) return;
 
-    const rawText = editor.innerText.replace(/\n/g, '').trim();
+    const rawText = editor.innerText.replace(/[\n\u200B]/g, '').trim();
     // On ne vide l'éditeur que si l'utilisateur efface du texte au clavier ('typing'),
     // jamais quand il clique sur un bouton de formatage ('command') !
     if (source === 'typing' && !rawText && !editor.querySelector('table') && !editor.querySelector('hr')) {
@@ -1863,15 +1863,60 @@ export default function App() {
       ignoreSelectionChangeRef.current = false;
       checkSelectionFormat();
     } else {
-      document.execCommand(command, false);
-      
-      if (command === 'bold') setIsBold(prev => !prev);
-      if (command === 'italic') setIsItalic(prev => !prev);
-      if (command === 'underline') setIsUnderline(prev => !prev);
-      if (command === 'strikeThrough') setIsStrike(prev => !prev);
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        if (range.collapsed) {
+          const container = range.startContainer;
+          const offset = range.startOffset;
+
+          // Si on a déjà notre caractère invisible juste avant le curseur, on le réutilise
+          if (container.nodeType === Node.TEXT_NODE && container.textContent?.slice(offset - 1, offset) === '\u200B') {
+            const tempRange = document.createRange();
+            tempRange.setStart(container, offset - 1);
+            tempRange.setEnd(container, offset);
+            sel.removeAllRanges();
+            sel.addRange(tempRange);
+            document.execCommand(command, false);
+            const endRange = document.createRange();
+            endRange.setStart(sel.focusNode || container, sel.focusOffset);
+            endRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(endRange);
+          } else if (
+            container.nodeType === Node.TEXT_NODE &&
+            offset > 0 &&
+            offset < (container.textContent?.length || 0)
+          ) {
+            // Au milieu d'un mot existant
+            document.execCommand(command, false);
+          } else {
+            // Dans le vide ou en fin de ligne : on crée une ancre invisible \u200B pour empiler les balises HTML
+            const zwsp = document.createTextNode('\u200B');
+            range.insertNode(zwsp);
+            const tempRange = document.createRange();
+            tempRange.selectNode(zwsp);
+            sel.removeAllRanges();
+            sel.addRange(tempRange);
+            document.execCommand(command, false);
+            const endRange = document.createRange();
+            endRange.setStart(zwsp, 1);
+            endRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(endRange);
+          }
+        } else {
+          // Si du texte est sélectionné normalement
+          document.execCommand(command, false);
+        }
+      }
+
+      if (command === 'bold') setIsBold((prev) => !prev);
+      if (command === 'italic') setIsItalic((prev) => !prev);
+      if (command === 'underline') setIsUnderline((prev) => !prev);
+      if (command === 'strikeThrough') setIsStrike((prev) => !prev);
 
       saveCurrentSelection();
-      // On déverrouille après que les événements asynchrones du DOM soient passés
       setTimeout(() => {
         ignoreSelectionChangeRef.current = false;
       }, 50);
