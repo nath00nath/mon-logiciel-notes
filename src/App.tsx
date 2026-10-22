@@ -242,7 +242,7 @@ const TABLE_DEFAULT_COL_WIDTH = 140;
 const MIN_COL_WIDTH = 30;
 
 const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Fira+Code:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Roboto:wght@400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Fira+Code:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lora:ital,wght@0,400;0,600;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Roboto:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap');
 
   :root {
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -1846,8 +1846,6 @@ export default function App() {
       ed.appendChild(p);
       placeCaret(p, false);
     }
-
-    document.execCommand('styleWithCSS', false, 'false');
 
     if (command === 'formatBlock') {
       const currentBlock = (document.queryCommandValue('formatBlock') || '').toLowerCase();
@@ -4078,8 +4076,7 @@ export default function App() {
                     else if (k === 'y') { e.preventDefault(); stepHistory(1); }
                     else if (!e.shiftKey && (k === 'b' || k === 'i' || k === 'u')) {
                      e.preventDefault();
-                     document.execCommand('styleWithCSS', false, 'false');
-                      document.execCommand(k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline', false);
+                     document.execCommand(k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline', false);
                      checkSelectionFormat();
                      handleContentChange();
                     }
