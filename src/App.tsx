@@ -1362,6 +1362,7 @@ export default function App() {
   const [saveError, setSaveError] = useState(false);
 
   const savedRangeRef = useRef<Range | null>(null);
+  const ignoreSelectionChangeRef = useRef<boolean>(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<Record<string, { stack: Snapshot[]; index: number }>>({});
   const lastPushRef = useRef(0);
@@ -1582,6 +1583,7 @@ export default function App() {
   }, []);
 
   const checkSelectionFormat = useCallback(() => {
+    if (ignoreSelectionChangeRef.current) return;
     try {
       const editor = editorRef.current;
       const selection = window.getSelection();
@@ -1742,7 +1744,9 @@ export default function App() {
     if (!editor || !activeNote || !activeFolder || !activeTab) return;
 
     const rawText = editor.innerText.replace(/\n/g, '').trim();
-    if (!rawText && !editor.querySelector('table') && !editor.querySelector('hr')) {
+    // On ne vide l'éditeur que si l'utilisateur efface du texte au clavier ('typing'),
+    // jamais quand il clique sur un bouton de formatage ('command') !
+    if (source === 'typing' && !rawText && !editor.querySelector('table') && !editor.querySelector('hr')) {
       editor.innerHTML = '';
     }
 
@@ -1834,12 +1838,16 @@ export default function App() {
   };
 
   const formatText = (e: ReactMouseEvent, command: string) => {
-    e.preventDefault(); // Empêche l'éditeur de perdre son focus
+    e.preventDefault();
     const ed = editorRef.current;
     if (!ed) return;
 
-    // Suppression de ed.focus() et restoreSelection() pour éviter les conflits
-    // de sélection. Le focus natif du navigateur reste intact.
+    // On verrouille l'écouteur selectionchange pendant l'opération
+    ignoreSelectionChangeRef.current = true;
+
+    if (document.activeElement !== ed) {
+      restoreSelection();
+    }
 
     if (!ed.innerHTML.trim() || ed.innerHTML === '<br>') {
       const p = document.createElement('p');
@@ -1852,19 +1860,24 @@ export default function App() {
     if (command === 'formatBlock') {
       const currentBlock = (document.queryCommandValue('formatBlock') || '').toLowerCase();
       document.execCommand('formatBlock', false, currentBlock === 'blockquote' ? 'p' : 'blockquote');
+      ignoreSelectionChangeRef.current = false;
       checkSelectionFormat();
     } else {
       document.execCommand(command, false);
       
-      // On bascule l'état localement et on ignore checkSelectionFormat pour ne pas 
-      // que le navigateur écrase notre choix si la ligne est vide.
       if (command === 'bold') setIsBold(prev => !prev);
       if (command === 'italic') setIsItalic(prev => !prev);
       if (command === 'underline') setIsUnderline(prev => !prev);
       if (command === 'strikeThrough') setIsStrike(prev => !prev);
+
+      saveCurrentSelection();
+      // On déverrouille après que les événements asynchrones du DOM soient passés
+      setTimeout(() => {
+        ignoreSelectionChangeRef.current = false;
+      }, 50);
     }
 
-    handleContentChange();
+    handleContentChange('command');
   };
 
   const applyAlignment = (requested: 'left' | 'center' | 'right' | 'full') => {
@@ -4080,15 +4093,18 @@ export default function App() {
                     else if (k === 'y') { e.preventDefault(); stepHistory(1); }
                     else if (!e.shiftKey && (k === 'b' || k === 'i' || k === 'u')) {
                      e.preventDefault();
+                     ignoreSelectionChangeRef.current = true;
                      const command = k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline';
                      document.execCommand(command, false);
                      
-                     // Synchronise l'UI manuellement sans appeler checkSelectionFormat
                      if (command === 'bold') setIsBold(prev => !prev);
                      if (command === 'italic') setIsItalic(prev => !prev);
                      if (command === 'underline') setIsUnderline(prev => !prev);
                      
-                     handleContentChange();
+                     setTimeout(() => {
+                       ignoreSelectionChangeRef.current = false;
+                     }, 50);
+                     handleContentChange('command');
                     }
                     else if (!e.shiftKey && k === 'k') handleInsertLink(e);
                   }
