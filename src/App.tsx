@@ -1620,6 +1620,26 @@ export default function App() {
       }
 
       setIsBulletList(document.queryCommandState('insertUnorderedList'));
+      setIsItalic(document.queryCommandState('italic'));
+      setIsBold(document.queryCommandState('bold'));
+      setIsUnderline(document.queryCommandState('underline'));
+      setIsStrike(document.queryCommandState('strikeThrough'));
+
+      // Détection dynamique de l'alignement sous le curseur
+      if (node && node instanceof HTMLElement) {
+        let currentEl: HTMLElement | null = node;
+        let detectedAlign: 'left' | 'center' | 'right' | 'full' = 'left';
+        while (currentEl && currentEl !== editor) {
+          const align = currentEl.style.textAlign || window.getComputedStyle(currentEl).textAlign;
+          if (align === 'center') { detectedAlign = 'center'; break; }
+          if (align === 'right') { detectedAlign = 'right'; break; }
+          if (align === 'justify') { detectedAlign = 'full'; break; }
+          if (align === 'left' || align === 'start') { detectedAlign = 'left'; break; }
+          currentEl = currentEl.parentElement;
+        }
+        setAlignment(detectedAlign);
+      }
+      
       const block = (document.queryCommandValue('formatBlock') || '').toLowerCase();
       setCurrentStyle(['p', 'h1', 'h2', 'h3'].includes(block) ? block : 'p');
       setIsQuote(block === 'blockquote');
@@ -1827,6 +1847,8 @@ export default function App() {
       placeCaret(p, false);
     }
 
+    document.execCommand('styleWithCSS', false, 'false');
+
     if (command === 'formatBlock') {
       const currentBlock = (document.queryCommandValue('formatBlock') || '').toLowerCase();
       document.execCommand('formatBlock', false, currentBlock === 'blockquote' ? 'p' : 'blockquote');
@@ -1834,10 +1856,10 @@ export default function App() {
       document.execCommand(command, false);
     }
 
-    if (command === 'bold') setIsBold((prev) => !prev);
-    if (command === 'italic') setIsItalic((prev) => !prev);
-    if (command === 'underline') setIsUnderline((prev) => !prev);
-    if (command === 'strikeThrough') setIsStrike((prev) => !prev);
+    setIsBold(document.queryCommandState('bold'));
+    setIsItalic(document.queryCommandState('italic'));
+    setIsUnderline(document.queryCommandState('underline'));
+    setIsStrike(document.queryCommandState('strikeThrough'));
 
     saveCurrentSelection();
     handleContentChange();
@@ -1848,21 +1870,6 @@ export default function App() {
     if (!ed) return;
     ed.focus();
     restoreSelection();
-
-    if (!ed.innerHTML.trim() || ed.innerHTML === '<br>') {
-      const p = document.createElement('p');
-      if (requested !== 'left') {
-        p.style.textAlign = requested === 'full' ? 'justify' : requested;
-      }
-      p.innerHTML = '<br>';
-      ed.innerHTML = '';
-      ed.appendChild(p);
-      placeCaret(p, false);
-      setAlignment(requested);
-      saveCurrentSelection();
-      handleContentChange();
-      return;
-    }
 
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
@@ -1882,13 +1889,11 @@ export default function App() {
         node.style.textAlign = cssAlign;
       }
     } else {
-      document.execCommand(
-        requested === 'center' ? 'justifyCenter'
-        : requested === 'right' ? 'justifyRight'
-        : requested === 'full' ? 'justifyFull'
-        : 'justifyLeft',
-        false
-      );
+      const p = document.createElement('p');
+      if (requested !== 'left') p.style.textAlign = cssAlign;
+      p.innerHTML = '<br>';
+      ed.appendChild(p);
+      placeCaret(p, false);
     }
 
     setAlignment(requested);
@@ -4072,10 +4077,11 @@ export default function App() {
                     if (k === 'z') { e.preventDefault(); stepHistory(e.shiftKey ? 1 : -1); }
                     else if (k === 'y') { e.preventDefault(); stepHistory(1); }
                     else if (!e.shiftKey && (k === 'b' || k === 'i' || k === 'u')) {
-                      e.preventDefault();
+                     e.preventDefault();
+                     document.execCommand('styleWithCSS', false, 'false');
                       document.execCommand(k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline', false);
-                      checkSelectionFormat();
-                      handleContentChange();
+                     checkSelectionFormat();
+                     handleContentChange();
                     }
                     else if (!e.shiftKey && k === 'k') handleInsertLink(e);
                   }
@@ -4095,6 +4101,7 @@ export default function App() {
                   textAlign: 'left',
                   direction: 'ltr',
                   fontFamily: "'IBM Plex Sans', sans-serif",
+                  
                 }}
               />
             </div>
