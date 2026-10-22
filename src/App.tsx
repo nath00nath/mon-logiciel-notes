@@ -1619,7 +1619,26 @@ export default function App() {
       if (!isNaN(px)) setFontSize(px);
     }
 
-    setIsBulletList(document.queryCommandState('insertUnorderedList'));
+    // Détection précise de l'état du texte exactement là où se trouve le curseur
+    setIsBold(document.queryCommandState('bold'));
+    setIsItalic(document.queryCommandState('italic'));
+    setIsUnderline(document.queryCommandState('underline'));
+    setIsStrike(document.queryCommandState('strikeThrough'));
+    // On met à jour uniquement si l'état change pour éviter tout clignotement inutile
+    const boldState = document.queryCommandState('bold');
+    setIsBold(prev => prev !== boldState ? boldState : prev);
+
+    const italicState = document.queryCommandState('italic');
+    setIsItalic(prev => prev !== italicState ? italicState : prev);
+
+    const underlineState = document.queryCommandState('underline');
+    setIsUnderline(prev => prev !== underlineState ? underlineState : prev);
+
+    const strikeState = document.queryCommandState('strikeThrough');
+    setIsStrike(prev => prev !== strikeState ? strikeState : prev);
+
+    const listState = document.queryCommandState('insertUnorderedList');
+    setIsBulletList(prev => prev !== listState ? listState : prev);
 
     // Détection dynamique de l'alignement sous le curseur
       if (node && node instanceof HTMLElement) {
