@@ -8,6 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    flowType: 'implicit',
   },
 });
 
@@ -1107,7 +1108,14 @@ export default function App() {
   const [folders, setFolders] = useState<Folder[]>(saved.folders);
   const [currentView, setCurrentView] = useState<'editor' | 'account'>('editor');
   const [isSignUp, setIsSignUp] = useState<boolean>(false);
-  const [user, setUser] = useState<{ name: string; avatarUrl: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; avatarUrl: string; email?: string } | null>(() => {
+    try {
+      const cached = localStorage.getItem('ksiazka-google-user');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -1130,6 +1138,7 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    localStorage.removeItem('ksiazka-google-user');
     await supabase.auth.signOut();
     setUser(null);
     setShowUserMenu(false);
@@ -1137,6 +1146,12 @@ export default function App() {
   };
 
   useEffect(() => {
+    const saveAndSetUser = (u: { name: string; avatarUrl: string; email?: string }) => {
+      setUser(u);
+      localStorage.setItem('ksiazka-google-user', JSON.stringify(u));
+      setCurrentView('editor');
+    };
+
     const extractUser = (u: any) => {
       const meta = u.user_metadata || {};
       const identityData = u.identities?.[0]?.identity_data || {};
@@ -1156,33 +1171,56 @@ export default function App() {
       return { name, avatarUrl, email: u.email };
     };
 
-    // Vérifier s'il y a une erreur renvoyée par Supabase dans l'URL
-    const params = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    const errDesc = params.get('error_description') || hashParams.get('error_description');
-    if (errDesc) {
-      console.error('Erreur Auth Supabase:', errDesc);
-      window.history.replaceState({}, document.title, window.location.pathname);
+    // 1. Lecture directe et infaillible du #access_token dans l'URL au retour de Google
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token=')) {
+      try {
+        const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        if (accessToken) {
+          // Décoder le payload JWT (en base64url) pour extraire tout de suite le nom et la photo Google
+          const base64Url = accessToken.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const payload = JSON.parse(jsonPayload);
+          const meta = payload.user_metadata || {};
+
+          saveAndSetUser({
+            name: meta.full_name || meta.name || payload.email?.split('@')[0] || 'Utilisateur',
+            avatarUrl: meta.avatar_url || meta.picture || 'https://www.gravatar.com/avatar/?d=mp',
+            email: payload.email,
+          });
+
+          if (refreshToken) {
+            supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).catch(() => {});
+          }
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch (e) {
+        console.error('Erreur décodage token :', e);
+      }
     }
 
-    // 1. Récupérer la session active au chargement
+    // 2. Récupérer la session Supabase normale si elle existe
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser(extractUser(session.user));
-        setCurrentView('editor');
+        saveAndSetUser(extractUser(session.user));
       }
     });
 
-    // 2. Écouter en temps réel la connexion / déconnexion
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 3. Écouter les changements de connexion
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        setUser(extractUser(session.user));
-        setCurrentView('editor');
-        // Nettoyer l'URL si elle contient des résidus OAuth
-        if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      } else {
+        saveAndSetUser(extractUser(session.user));
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('ksiazka-google-user');
         setUser(null);
       }
     });
@@ -1190,7 +1228,7 @@ export default function App() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, []);;
 
   const [fontList, setFontList] = useState<string[]>(SYSTEM_FONTS);
   const [currentFontLabel, setCurrentFontLabel] = useState<string>('IBM Plex Sans');
@@ -2651,56 +2689,7 @@ export default function App() {
                 {user.name}
               </span>
             )}
-{showSettingsModal && (
-        <div className="overlay" onClick={() => setShowSettingsModal(false)}>
-          <div className="glass modal" style={{ width: '400px' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', textAlign: 'center', fontWeight: 600 }}>
-              Paramètres du compte
-            </h3>
-            {user && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(15,23,42,0.04)', marginBottom: '16px' }}>
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name}
-                  referrerPolicy="no-referrer"
-                  style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
-                />
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#0f172a' }}>{user.name}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>Synchronisation Google active</div>
-                </div>
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-              <button
-                className="m-btn"
-                style={{ width: '100%', textAlign: 'left' }}
-                onClick={() => {
-                  setShowSettingsModal(false);
-                  handleGoogleLogin(true);
-                }}
-              >
-                🔄 Changer de compte Google
-              </button>
-              <button
-                className="m-btn"
-                style={{ width: '100%', textAlign: 'left', color: '#ef4444' }}
-                onClick={() => {
-                  setShowSettingsModal(false);
-                  handleLogout();
-                }}
-              >
-                🚪 Se déconnecter
-              </button>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="m-btn primary" onClick={() => setShowSettingsModal(false)}>
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
             <button
               onClick={() => {
                 if (!user) {
@@ -2805,6 +2794,58 @@ export default function App() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showSettingsModal && (
+        <div className="overlay" onClick={() => setShowSettingsModal(false)}>
+          <div className="glass modal" style={{ width: '400px' }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', textAlign: 'center', fontWeight: 600 }}>
+              Paramètres du compte
+            </h3>
+            {user && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(15,23,42,0.04)', marginBottom: '16px' }}>
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  referrerPolicy="no-referrer"
+                  style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
+                />
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#0f172a' }}>{user.name}</div>
+                  {user.email && <div style={{ fontSize: '0.78rem', color: '#475569' }}>{user.email}</div>}
+                  <div style={{ fontSize: '0.75rem', color: '#16a34a', marginTop: '2px' }}>● Synchronisation Google active</div>
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+              <button
+                className="m-btn"
+                style={{ width: '100%', textAlign: 'left' }}
+                onClick={() => {
+                  setShowSettingsModal(false);
+                  handleGoogleLogin(true);
+                }}
+              >
+                🔄 Changer de compte Google
+              </button>
+              <button
+                className="m-btn"
+                style={{ width: '100%', textAlign: 'left', color: '#ef4444' }}
+                onClick={() => {
+                  setShowSettingsModal(false);
+                  handleLogout();
+                }}
+              >
+                🚪 Se déconnecter
+              </button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="m-btn primary" onClick={() => setShowSettingsModal(false)}>
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}
