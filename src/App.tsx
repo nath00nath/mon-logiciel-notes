@@ -2645,6 +2645,7 @@ useEffect(() => {
             </button>
 
             {/* Popup menu au clic si l'utilisateur est connecté */}
+            {/* Popup menu au clic si l'utilisateur est connecté */}
             {showUserMenu && user && (
               <div
                 className="glass menu"
@@ -2670,6 +2671,15 @@ useEffect(() => {
                   }}
                 >
                   Changer de compte
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    alert("Ouverture des paramètres");
+                  }}
+                >
+                  Paramètres
                 </div>
                 <div
                   className="menu-item danger"
