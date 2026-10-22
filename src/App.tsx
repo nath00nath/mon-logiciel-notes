@@ -1247,6 +1247,7 @@ export default function App() {
     };
   }, []);
 
+  // Charger les notes depuis Supabase dès qu'un utilisateur est connecté
   useEffect(() => {
     let isMounted = true;
 
@@ -1262,7 +1263,11 @@ export default function App() {
         .eq('user_id', currentUid)
         .maybeSingle();
 
-      if (error) return;
+      if (error) {
+        console.error('Erreur chargement Cloud:', error.message);
+        return;
+      }
+
       if (!isMounted) return;
 
       if (data && Array.isArray(data.folders) && data.folders.length > 0) {
@@ -1270,15 +1275,15 @@ export default function App() {
         if (data.active_folder_id) setActiveFolderId(data.active_folder_id);
         if (data.active_note_id) setActiveNoteId(data.active_note_id);
         if (data.collapsed_folders) setCollapsedFolders(data.collapsed_folders);
-
-        // Met à jour l'éditeur immédiatement avec la note active du compte
-        const activeF = data.folders.find((f: any) => f.id === (data.active_folder_id || '1')) || data.folders[0];
-        const activeN = activeF?.notes?.find((n: any) => n.id === (data.active_note_id || 'n1')) || activeF?.notes?.[0];
-        const activeT = activeN?.tabs?.find((t: any) => t.id === activeN?.activeTabId) || activeN?.tabs?.[0];
-
-        if (editorRef.current && activeT) {
-          editorRef.current.innerHTML = activeT.content || '';
-        }
+      } else {
+        await supabase.from('user_data').upsert({
+          user_id: currentUid,
+          folders,
+          active_folder_id: activeFolderId,
+          active_note_id: activeNoteId,
+          collapsed_folders: collapsedFolders,
+          updated_at: new Date().toISOString(),
+        });
       }
     };
 
@@ -1470,6 +1475,26 @@ export default function App() {
 
     return () => window.clearTimeout(t);
   }, [folders, activeFolderId, activeNoteId, collapsedFolders, user]);
+
+  useEffect(() => {
+  const handleBeforeUnload = () => {
+    if (user && activeFolder) {
+      // Sauvegarde d'urgence synchrone ou immédiate si l'utilisateur ferme l'onglet
+      const targetId = user.id;
+      supabase.from('user_data').upsert({
+        user_id: targetId,
+        folders,
+        active_folder_id: activeFolderId,
+        active_note_id: activeNoteId,
+        collapsed_folders: collapsedFolders,
+        updated_at: new Date().toISOString(),
+      });
+    }
+  };
+
+  window.addEventListener('beforeunload', handleBeforeUnload);
+  return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+}, [folders, activeFolderId, activeNoteId, collapsedFolders, user]);
 
   useEffect(() => {
     const styleTag = document.createElement('style');
