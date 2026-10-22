@@ -1242,26 +1242,51 @@ export default function App() {
 
   // Charger les notes depuis Supabase dès qu'un utilisateur est connecté
   useEffect(() => {
-    if (!user?.id) return;
+    let isMounted = true;
 
-    const loadCloudData = async () => {
+    const syncWithCloud = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const currentUid = authUser?.id || user?.id;
+
+      if (!currentUid) return;
+
       const { data, error } = await supabase
         .from('user_data')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUid)
         .maybeSingle();
 
-      if (!error && data) {
-        if (Array.isArray(data.folders) && data.folders.length > 0) {
-          setFolders(data.folders);
-        }
+      if (error) {
+        console.error('Erreur chargement Cloud:', error.message);
+        return;
+      }
+
+      if (!isMounted) return;
+
+      if (data && Array.isArray(data.folders) && data.folders.length > 0) {
+        setFolders(data.folders);
         if (data.active_folder_id) setActiveFolderId(data.active_folder_id);
         if (data.active_note_id) setActiveNoteId(data.active_note_id);
         if (data.collapsed_folders) setCollapsedFolders(data.collapsed_folders);
+      } else {
+        await supabase.from('user_data').upsert({
+          user_id: currentUid,
+          folders,
+          active_folder_id: activeFolderId,
+          active_note_id: activeNoteId,
+          collapsed_folders: collapsedFolders,
+          updated_at: new Date().toISOString(),
+        });
       }
     };
 
-    loadCloudData();
+    if (user) {
+      syncWithCloud();
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [user?.id]);
 
   const [fontList, setFontList] = useState<string[]>(SYSTEM_FONTS);
@@ -1405,18 +1430,27 @@ export default function App() {
 
   useEffect(() => {
     const t = window.setTimeout(async () => {
-      if (user?.id) {
-        // Sauvegarde sur Supabase uniquement quand on est connecté
-        await supabase.from('user_data').upsert({
-          user_id: user.id,
-          folders,
-          active_folder_id: activeFolderId,
-          active_note_id: activeNoteId,
-          collapsed_folders: collapsedFolders,
-          updated_at: new Date().toISOString(),
-        });
+      if (user) {
+        // Récupérer l'identifiant officiel Supabase pour écrire dans la base
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const targetId = authUser?.id || user.id;
+
+        if (targetId) {
+          const { error } = await supabase.from('user_data').upsert({
+            user_id: targetId,
+            folders,
+            active_folder_id: activeFolderId,
+            active_note_id: activeNoteId,
+            collapsed_folders: collapsedFolders,
+            updated_at: new Date().toISOString(),
+          });
+
+          if (error) {
+            console.error('Erreur sauvegarde Supabase:', error.message);
+          }
+        }
       } else {
-        // Sauvegarde dans le localStorage uniquement quand on est hors ligne / invité
+        // Mode invité : sauvegarde temporaire en sessionStorage
         try {
           sessionStorage.setItem(
             STORAGE_KEY,
@@ -1432,10 +1466,10 @@ export default function App() {
           setSaveError(true);
         }
       }
-    }, 500);
+    }, 400);
 
     return () => window.clearTimeout(t);
-  }, [folders, activeFolderId, activeNoteId, collapsedFolders, user?.id]);
+  }, [folders, activeFolderId, activeNoteId, collapsedFolders, user]);
 
   useEffect(() => {
     const styleTag = document.createElement('style');
