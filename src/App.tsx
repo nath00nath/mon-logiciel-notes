@@ -2880,18 +2880,18 @@ export default function App() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 8px 10px 8px', borderBottom: '1px solid rgba(15,23,42,0.08)', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '6px 8px 10px 8px', borderBottom: '1px solid rgba(15,23,42,0.08)', marginBottom: '6px' }}>
                   <img
                     src={user.avatarUrl}
                     alt={user.name}
                     referrerPolicy="no-referrer"
-                    style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                    style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, marginTop: '2px' }}
                   />
-                  <div style={{ overflow: 'hidden', minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <div style={{ fontSize: '0.86rem', fontWeight: 650, color: '#0f172a', lineHeight: '1.2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ overflow: 'hidden', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', lineHeight: '36px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {user.name}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 500, whiteSpace: 'nowrap', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 500, whiteSpace: 'nowrap', marginTop: '-4px' }}>
                       ● Connecté via Google
                     </div>
                   </div>
@@ -2905,12 +2905,11 @@ export default function App() {
                   }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="16 3 21 3 21 8" />
-                      <line x1="4" y1="20" x2="21" y2="3" />
-                      <polyline points="21 16 21 21 16 21" />
-                      <line x1="15" y1="15" x2="21" y2="21" />
-                      <line x1="4" y1="4" x2="9" y2="9" />
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 7H4" />
+                      <path d="M8 3L4 7l4 4" />
+                      <path d="M4 17h16" />
+                      <path d="M16 21l4-4-4-4" />
                     </svg>
                     Changer de compte
                   </span>
