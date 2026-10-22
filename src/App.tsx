@@ -1139,17 +1139,24 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    localStorage.removeItem('ksiazka-google-user');
-    await supabase.auth.signOut();
-    setUser(null);
-    setShowUserMenu(false);
-    // Réinitialiser les dossiers et notes par défaut
-    setFolders(DEFAULT_FOLDERS);
-    setActiveFolderId('1');
-    setActiveNoteId('n1');
-    setCollapsedFolders({});
-    setCurrentView('editor');
-  };
+  localStorage.removeItem('ksiazka-google-user');
+  await supabase.auth.signOut();
+  setUser(null);
+  setShowUserMenu(false);
+  
+  // Réinitialiser les dossiers et notes par défaut
+  setFolders(DEFAULT_FOLDERS);
+  setActiveFolderId('1');
+  setActiveNoteId('n1');
+  setCollapsedFolders({});
+
+  // Vider le contenu affiché à l'écran
+  if (editorRef.current) {
+    editorRef.current.innerHTML = '';
+  }
+
+  setCurrentView('editor');
+};
 
   useEffect(() => {
     const saveAndSetUser = (u: { id?: string; name: string; avatarUrl: string; email?: string }) => {
@@ -1240,7 +1247,6 @@ export default function App() {
     };
   }, []);
 
-  // Charger les notes depuis Supabase dès qu'un utilisateur est connecté
   useEffect(() => {
     let isMounted = true;
 
@@ -1256,11 +1262,7 @@ export default function App() {
         .eq('user_id', currentUid)
         .maybeSingle();
 
-      if (error) {
-        console.error('Erreur chargement Cloud:', error.message);
-        return;
-      }
-
+      if (error) return;
       if (!isMounted) return;
 
       if (data && Array.isArray(data.folders) && data.folders.length > 0) {
@@ -1268,15 +1270,15 @@ export default function App() {
         if (data.active_folder_id) setActiveFolderId(data.active_folder_id);
         if (data.active_note_id) setActiveNoteId(data.active_note_id);
         if (data.collapsed_folders) setCollapsedFolders(data.collapsed_folders);
-      } else {
-        await supabase.from('user_data').upsert({
-          user_id: currentUid,
-          folders,
-          active_folder_id: activeFolderId,
-          active_note_id: activeNoteId,
-          collapsed_folders: collapsedFolders,
-          updated_at: new Date().toISOString(),
-        });
+
+        // Met à jour l'éditeur immédiatement avec la note active du compte
+        const activeF = data.folders.find((f: any) => f.id === (data.active_folder_id || '1')) || data.folders[0];
+        const activeN = activeF?.notes?.find((n: any) => n.id === (data.active_note_id || 'n1')) || activeF?.notes?.[0];
+        const activeT = activeN?.tabs?.find((t: any) => t.id === activeN?.activeTabId) || activeN?.tabs?.[0];
+
+        if (editorRef.current && activeT) {
+          editorRef.current.innerHTML = activeT.content || '';
+        }
       }
     };
 
