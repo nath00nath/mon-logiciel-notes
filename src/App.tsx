@@ -2,7 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://snyyukojboitojcdcslr.supabase.co';
 const supabaseKey = 'sb_publishable_ctp4lglddxegp0A2a-iTGQ_z_w4qbof';
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true, // <-- C'est cette option qui permet de capturer le code de retour Google dans l'URL
+  },
+});
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { ChangeEvent, CSSProperties, FormEvent, MouseEvent as ReactMouseEvent } from 'react';
