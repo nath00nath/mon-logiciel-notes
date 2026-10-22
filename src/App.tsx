@@ -1616,16 +1616,12 @@ export default function App() {
         }
 
         const px = Math.round(parseFloat(computed.fontSize));
-        if (!isNaN(px)) setFontSize(px);
-      }
+      if (!isNaN(px)) setFontSize(px);
+    }
 
-      setIsBulletList(document.queryCommandState('insertUnorderedList'));
-      setIsItalic(document.queryCommandState('italic'));
-      setIsBold(document.queryCommandState('bold'));
-      setIsUnderline(document.queryCommandState('underline'));
-      setIsStrike(document.queryCommandState('strikeThrough'));
+    setIsBulletList(document.queryCommandState('insertUnorderedList'));
 
-      // Détection dynamique de l'alignement sous le curseur
+    // Détection dynamique de l'alignement sous le curseur
       if (node && node instanceof HTMLElement) {
         let currentEl: HTMLElement | null = node;
         let detectedAlign: 'left' | 'center' | 'right' | 'full' = 'left';
@@ -1853,6 +1849,12 @@ export default function App() {
       document.execCommand('formatBlock', false, currentBlock === 'blockquote' ? 'p' : 'blockquote');
     } else {
       document.execCommand(command, false);
+      
+      // On force le basculement manuel de l'état du bouton pour qu'il obéisse toujours
+      if (command === 'bold') setIsBold(prev => !prev);
+      if (command === 'italic') setIsItalic(prev => !prev);
+      if (command === 'underline') setIsUnderline(prev => !prev);
+      if (command === 'strikeThrough') setIsStrike(prev => !prev);
     }
 
     // Utilisation de la fonction unifiée pour tout mettre à jour
@@ -4073,7 +4075,14 @@ export default function App() {
                     else if (k === 'y') { e.preventDefault(); stepHistory(1); }
                     else if (!e.shiftKey && (k === 'b' || k === 'i' || k === 'u')) {
                      e.preventDefault();
-                     document.execCommand(k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline', false);
+                     const command = k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline';
+                     document.execCommand(command, false);
+                     
+                     // Synchronise l'UI manuellement avec le raccourci clavier
+                     if (command === 'bold') setIsBold(prev => !prev);
+                     if (command === 'italic') setIsItalic(prev => !prev);
+                     if (command === 'underline') setIsUnderline(prev => !prev);
+                     
                      checkSelectionFormat();
                      handleContentChange();
                     }
