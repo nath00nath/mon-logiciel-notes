@@ -4169,19 +4169,11 @@ export default function App() {
                     if (k === 'z') { e.preventDefault(); stepHistory(e.shiftKey ? 1 : -1); }
                     else if (k === 'y') { e.preventDefault(); stepHistory(1); }
                     else if (!e.shiftKey && (k === 'b' || k === 'i' || k === 'u')) {
-                     e.preventDefault();
-                     ignoreSelectionChangeRef.current = true;
-                     const command = k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline';
-                     document.execCommand(command, false);
-                     
-                     if (command === 'bold') setIsBold(prev => !prev);
-                     if (command === 'italic') setIsItalic(prev => !prev);
-                     if (command === 'underline') setIsUnderline(prev => !prev);
-                     
-                     setTimeout(() => {
-                       ignoreSelectionChangeRef.current = false;
-                     }, 50);
-                     handleContentChange('command');
+                      const command = k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline';
+                      formatText(e as unknown as ReactMouseEvent, command);
+                    }
+                    else if (e.shiftKey && (k === 'x' || k === 's')) {
+                      formatText(e as unknown as ReactMouseEvent, 'strikeThrough');
                     }
                     else if (!e.shiftKey && k === 'k') handleInsertLink(e);
                   }
