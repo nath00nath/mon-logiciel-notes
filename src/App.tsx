@@ -1621,21 +1621,28 @@ export default function App() {
       if (!isNaN(px)) setFontSize(px);
     }
 
-    // Détection robuste des 4 états indépendants
-    let hasUnderline = document.queryCommandState('underline');
-    let hasStrike = document.queryCommandState('strikeThrough');
+    // Détection directe via l'arbre DOM pour éviter les bugs de queryCommandState
+    let hasBold = false;
+    let hasItalic = false;
+    let hasUnderline = false;
+    let hasStrike = false;
 
-    // Vérification dans l'arbre parental pour empêcher l'exclusion mutuelle native
     let checkEl: HTMLElement | null = node instanceof HTMLElement ? node : node?.parentElement || null;
     while (checkEl && checkEl !== editor) {
       const tag = checkEl.tagName;
-      if (tag === 'U' || checkEl.style.textDecoration.includes('underline')) hasUnderline = true;
-      if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL' || checkEl.style.textDecoration.includes('line-through')) hasStrike = true;
+      const fw = checkEl.style.fontWeight;
+      const fs = checkEl.style.fontStyle;
+      const td = `${checkEl.style.textDecoration} ${checkEl.style.textDecorationLine}`;
+
+      if (tag === 'B' || tag === 'STRONG' || fw === 'bold' || Number(fw) >= 600) hasBold = true;
+      if (tag === 'I' || tag === 'EM' || fs === 'italic') hasItalic = true;
+      if (tag === 'U' || td.includes('underline')) hasUnderline = true;
+      if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL' || td.includes('line-through')) hasStrike = true;
       checkEl = checkEl.parentElement;
     }
 
-    setIsBold(document.queryCommandState('bold'));
-    setIsItalic(document.queryCommandState('italic'));
+    setIsBold(hasBold);
+    setIsItalic(hasItalic);
     setIsUnderline(hasUnderline);
     setIsStrike(hasStrike);
     setIsBulletList(document.queryCommandState('insertUnorderedList'));
@@ -1870,13 +1877,24 @@ export default function App() {
       placeCaret(p, false);
     }
 
+    // Force l'utilisation de vraies balises HTML (<b>, <i>, <u>, <s>) au lieu de style="text-decoration:..."
+    document.execCommand('styleWithCSS', false, 'false');
+
     if (command === 'formatBlock') {
       const currentBlock = (document.queryCommandValue('formatBlock') || '').toLowerCase();
       document.execCommand('formatBlock', false, currentBlock === 'blockquote' ? 'p' : 'blockquote');
       ignoreSelectionChangeRef.current = false;
       checkSelectionFormat();
+    } else if (command === 'removeFormat') {
+      document.execCommand('removeFormat', false);
+      setIsBold(false);
+      setIsItalic(false);
+      setIsUnderline(false);
+      setIsStrike(false);
+      setTimeout(() => {
+        ignoreSelectionChangeRef.current = false;
+      }, 50);
     } else {
-      // 1. Calcul du nouvel état booléen ciblé pour chaque bouton
       const nextBold = command === 'bold' ? !isBold : isBold;
       const nextItalic = command === 'italic' ? !isItalic : isItalic;
       const nextUnderline = command === 'underline' ? !isUnderline : isUnderline;
@@ -1888,57 +1906,89 @@ export default function App() {
         const range = sel.getRangeAt(0);
 
         if (!range.collapsed) {
-          // Si du texte est surligné : gestion manuelle pour souligner/barrer afin d'éviter l'écrasement mutuel
-          if (command === 'underline' || command === 'strikeThrough') {
-            const tag = command === 'underline' ? 'u' : 's';
-            const isActive = command === 'underline' ? isUnderline : isStrike;
+          // Texte sélectionné : avec styleWithCSS=false, chaque balise <b>, <i>, <u>, <s> est 100% indépendante
+          document.execCommand(command, false);
+        } else {
+          // Curseur simple (ligne vide OU après du texte) :
+          // Si on est déjà sur un marqueur d'attente (<span data-fmt-anchor>), on le remplace
+          let anchorSpan: HTMLElement | null = null;
+          let curr: Node | null = range.startContainer;
+          while (curr && curr !== ed) {
+            if (curr instanceof HTMLElement && curr.hasAttribute('data-fmt-anchor')) {
+              anchorSpan = curr;
+              break;
+            }
+            curr = curr.parentNode;
+          }
 
-            if (!isActive) {
-              const el = document.createElement(tag);
-              el.appendChild(range.extractContents());
-              range.insertNode(el);
-              const newRange = document.createRange();
-              newRange.selectNodeContents(el);
+          // Si l'ancre existe et ne contient pas encore de vrai texte tapé, on se place à son endroit
+          if (anchorSpan && anchorSpan.textContent === '\u200B') {
+            const parent = anchorSpan.parentNode;
+            if (parent) {
+              const idx = Array.from(parent.childNodes).indexOf(anchorSpan);
+              parent.removeChild(anchorSpan);
+              const r = document.createRange();
+              r.setStart(parent, idx);
+              r.collapse(true);
               sel.removeAllRanges();
-              sel.addRange(newRange);
-            } else {
-              document.execCommand(command, false);
+              sel.addRange(r);
             }
           } else {
-            document.execCommand(command, false);
+            // Si le curseur est à l'intérieur de balises de style existantes, on sort au niveau du bloc
+            // en coupant proprement à la position du curseur pour appliquer la nouvelle combinaison
+            let inlineTop: Node | null = range.startContainer;
+            let foundInline = false;
+            while (
+              inlineTop &&
+              inlineTop.parentNode &&
+              inlineTop.parentNode !== ed &&
+              ['B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL', 'SPAN'].includes(
+                (inlineTop.parentNode as HTMLElement).tagName
+              )
+            ) {
+              inlineTop = inlineTop.parentNode;
+              foundInline = true;
+            }
+            if (foundInline && inlineTop && inlineTop.parentNode) {
+              const afterRange = document.createRange();
+              afterRange.setStart(range.startContainer, range.startOffset);
+              afterRange.setEndAfter(inlineTop);
+              const afterFrag = afterRange.extractContents();
+              const parent = inlineTop.parentNode;
+              const nextSib = inlineTop.nextSibling;
+              if ((afterFrag.textContent || '').replace(/\u200B/g, '').length > 0) {
+                parent.insertBefore(afterFrag, nextSib);
+              }
+              const r = document.createRange();
+              if (nextSib) r.setStartBefore(nextSib);
+              else r.setStart(parent, parent.childNodes.length);
+              r.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(r);
+            }
           }
-        } else {
-          // Curseur sans sélection (vide ou entre des lettres)
-          let block: Node | null = range.startContainer;
-          while (block && block !== ed && !['P', 'DIV', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'LI', 'TD'].includes((block as HTMLElement).tagName)) {
-            block = block.parentNode;
-          }
-          const blockText = (block?.textContent || '').replace(/[\n\u200B\s]/g, '');
 
-          if (!blockText) {
-            // Bloc/ligne vide : on empile les balises autour du ZWSP sans écrasement
-            const targetContainer = (block as HTMLElement) || ed;
-            targetContainer.innerHTML = '';
+          // On insère la nouvelle boîte d'ancrage contenant exactement les 4 états voulus
+          const insertRange = sel.getRangeAt(0);
+          const wrapper = document.createElement('span');
+          wrapper.setAttribute('data-fmt-anchor', '1');
 
-            const zwsp = document.createTextNode('\u200B');
-            let currentNode: Node = zwsp;
+          const zwsp = document.createTextNode('\u200B');
+          let inner: Node = zwsp;
 
-            if (nextStrike) { const s = document.createElement('s'); s.appendChild(currentNode); currentNode = s; }
-            if (nextUnderline) { const u = document.createElement('u'); u.appendChild(currentNode); currentNode = u; }
-            if (nextItalic) { const i = document.createElement('i'); i.appendChild(currentNode); currentNode = i; }
-            if (nextBold) { const b = document.createElement('b'); b.appendChild(currentNode); currentNode = b; }
+          if (nextStrike) { const s = document.createElement('s'); s.appendChild(inner); inner = s; }
+          if (nextUnderline) { const u = document.createElement('u'); u.appendChild(inner); inner = u; }
+          if (nextItalic) { const i = document.createElement('i'); i.appendChild(inner); inner = i; }
+          if (nextBold) { const b = document.createElement('b'); b.appendChild(inner); inner = b; }
 
-            targetContainer.appendChild(currentNode);
+          wrapper.appendChild(inner);
+          insertRange.insertNode(wrapper);
 
-            const caretRange = document.createRange();
-            caretRange.setStart(zwsp, 1);
-            caretRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(caretRange);
-          } else {
-            // Curseur au milieu de texte : on applique la commande
-            document.execCommand(command, false);
-          }
+          const caretRange = document.createRange();
+          caretRange.setStart(zwsp, 1);
+          caretRange.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(caretRange);
         }
       }
 
@@ -2146,6 +2196,7 @@ export default function App() {
           : color;
       document.execCommand('styleWithCSS', false, 'true');
       document.execCommand(command, false, nextColor);
+      document.execCommand('styleWithCSS', false, 'false');
       if (command === 'foreColor') setTextColor(nextColor);
       else setHighlightColor(nextColor);
       checkSelectionFormat();
