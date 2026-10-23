@@ -1111,7 +1111,7 @@ export default function App() {
   const [isSignUp, setIsSignUp] = useState<boolean>(false);
   const [user, setUser] = useState<{ id?: string; name: string; avatarUrl: string; email?: string } | null>(() => {
     try {
-      const cached = localStorage.getItem('ksiazka-google-user');
+      const cached = localStorage.getItem('plume-google-user');
       return cached ? JSON.parse(cached) : null;
     } catch {
       return null;
@@ -3738,7 +3738,7 @@ export default function App() {
                   overflow: 'visible',
                 }}
               >
-                <div className="brand" aria-label="książka">
+                <div className="brand" aria-label="plume">
                   <span className="brand-mark" aria-hidden="true">
                     <svg viewBox="0 0 24 24" width="31" height="31">
                       <path d="M12 6.6C10.3 5.4 8 5 5.2 5v11.6c2.8 0 5.1.4 6.8 1.6z" fill="#ffffff" fillOpacity="0.95" />
@@ -3788,7 +3788,7 @@ export default function App() {
                     </div>
                   </span>
 
-                  <span className="brand-word">książka</span>
+                  <span className="brand-word">plume</span>
                 </div>
               </div>
 
