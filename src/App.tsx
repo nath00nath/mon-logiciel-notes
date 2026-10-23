@@ -1621,11 +1621,23 @@ export default function App() {
       if (!isNaN(px)) setFontSize(px);
     }
 
-    // Détection de l'état natif par le navigateur
+    // Détection robuste des 4 états indépendants
+    let hasUnderline = document.queryCommandState('underline');
+    let hasStrike = document.queryCommandState('strikeThrough');
+
+    // Vérification dans l'arbre parental pour empêcher l'exclusion mutuelle native
+    let checkEl: HTMLElement | null = node instanceof HTMLElement ? node : node?.parentElement || null;
+    while (checkEl && checkEl !== editor) {
+      const tag = checkEl.tagName;
+      if (tag === 'U' || checkEl.style.textDecoration.includes('underline')) hasUnderline = true;
+      if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL' || checkEl.style.textDecoration.includes('line-through')) hasStrike = true;
+      checkEl = checkEl.parentElement;
+    }
+
     setIsBold(document.queryCommandState('bold'));
     setIsItalic(document.queryCommandState('italic'));
-    setIsUnderline(document.queryCommandState('underline'));
-    setIsStrike(document.queryCommandState('strikeThrough'));
+    setIsUnderline(hasUnderline);
+    setIsStrike(hasStrike);
     setIsBulletList(document.queryCommandState('insertUnorderedList'));
 
     // Détection dynamique de l'alignement sous le curseur
@@ -1864,66 +1876,76 @@ export default function App() {
       ignoreSelectionChangeRef.current = false;
       checkSelectionFormat();
     } else {
-      const sel = window.getSelection();
-      const currentText = ed.innerText.replace(/[\n\u200B\s]/g, '');
+      // 1. Calcul du nouvel état booléen ciblé pour chaque bouton
+      const nextBold = command === 'bold' ? !isBold : isBold;
+      const nextItalic = command === 'italic' ? !isItalic : isItalic;
+      const nextUnderline = command === 'underline' ? !isUnderline : isUnderline;
+      const nextStrike = command === 'strikeThrough' ? !isStrike : isStrike;
 
-      // On vérifie si la ligne ou le bloc autour du curseur est totalement vide de texte
-      let isLineEmpty = false;
+      const sel = window.getSelection();
+
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
-        if (range.collapsed) {
+
+        if (!range.collapsed) {
+          // Si du texte est surligné : gestion manuelle pour souligner/barrer afin d'éviter l'écrasement mutuel
+          if (command === 'underline' || command === 'strikeThrough') {
+            const tag = command === 'underline' ? 'u' : 's';
+            const isActive = command === 'underline' ? isUnderline : isStrike;
+
+            if (!isActive) {
+              const el = document.createElement(tag);
+              el.appendChild(range.extractContents());
+              range.insertNode(el);
+              const newRange = document.createRange();
+              newRange.selectNodeContents(el);
+              sel.removeAllRanges();
+              sel.addRange(newRange);
+            } else {
+              document.execCommand(command, false);
+            }
+          } else {
+            document.execCommand(command, false);
+          }
+        } else {
+          // Curseur sans sélection (vide ou entre des lettres)
           let block: Node | null = range.startContainer;
           while (block && block !== ed && !['P', 'DIV', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'LI', 'TD'].includes((block as HTMLElement).tagName)) {
             block = block.parentNode;
           }
           const blockText = (block?.textContent || '').replace(/[\n\u200B\s]/g, '');
-          isLineEmpty = !currentText || !blockText;
+
+          if (!blockText) {
+            // Bloc/ligne vide : on empile les balises autour du ZWSP sans écrasement
+            const targetContainer = (block as HTMLElement) || ed;
+            targetContainer.innerHTML = '';
+
+            const zwsp = document.createTextNode('\u200B');
+            let currentNode: Node = zwsp;
+
+            if (nextStrike) { const s = document.createElement('s'); s.appendChild(currentNode); currentNode = s; }
+            if (nextUnderline) { const u = document.createElement('u'); u.appendChild(currentNode); currentNode = u; }
+            if (nextItalic) { const i = document.createElement('i'); i.appendChild(currentNode); currentNode = i; }
+            if (nextBold) { const b = document.createElement('b'); b.appendChild(currentNode); currentNode = b; }
+
+            targetContainer.appendChild(currentNode);
+
+            const caretRange = document.createRange();
+            caretRange.setStart(zwsp, 1);
+            caretRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(caretRange);
+          } else {
+            // Curseur au milieu de texte : on applique la commande
+            document.execCommand(command, false);
+          }
         }
       }
 
-      if (isLineEmpty && sel && sel.rangeCount > 0) {
-        // Mode curseur vide : on gère la pile sans jamais risquer de supprimer du texte
-        const nextBold = command === 'bold' ? !isBold : isBold;
-        const nextItalic = command === 'italic' ? !isItalic : isItalic;
-        const nextUnderline = command === 'underline' ? !isUnderline : isUnderline;
-        const nextStrike = command === 'strikeThrough' ? !isStrike : isStrike;
-
-        let block: Node | null = sel.getRangeAt(0).startContainer;
-        while (block && block !== ed && !['P', 'DIV', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'LI', 'TD'].includes((block as HTMLElement).tagName)) {
-          block = block.parentNode;
-        }
-
-        const targetContainer = (block as HTMLElement) || ed;
-        targetContainer.innerHTML = '';
-
-        const zwsp = document.createTextNode('\u200B');
-        let currentNode: Node = zwsp;
-
-        if (nextStrike) { const s = document.createElement('s'); s.appendChild(currentNode); currentNode = s; }
-        if (nextUnderline) { const u = document.createElement('u'); u.appendChild(currentNode); currentNode = u; }
-        if (nextItalic) { const i = document.createElement('i'); i.appendChild(currentNode); currentNode = i; }
-        if (nextBold) { const b = document.createElement('b'); b.appendChild(currentNode); currentNode = b; }
-
-        targetContainer.appendChild(currentNode);
-
-        const caretRange = document.createRange();
-        caretRange.setStart(zwsp, 1);
-        caretRange.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(caretRange);
-
-        setIsBold(nextBold);
-        setIsItalic(nextItalic);
-        setIsUnderline(nextUnderline);
-        setIsStrike(nextStrike);
-      } else {
-        // Mode avec du texte existant : exécution standard native sans altérer le texte
-        document.execCommand(command, false);
-        if (command === 'bold') setIsBold((prev) => !prev);
-        if (command === 'italic') setIsItalic((prev) => !prev);
-        if (command === 'underline') setIsUnderline((prev) => !prev);
-        if (command === 'strikeThrough') setIsStrike((prev) => !prev);
-      }
+      setIsBold(nextBold);
+      setIsItalic(nextItalic);
+      setIsUnderline(nextUnderline);
+      setIsStrike(nextStrike);
 
       saveCurrentSelection();
       setTimeout(() => {
