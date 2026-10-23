@@ -834,7 +834,7 @@ const GLOBAL_CSS = `
     animation: noteIn 0.4s var(--ease);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
+    text-rendering: optimizeSpeed;
   }
   .note-editor h1, .note-editor h2, .note-editor h3, .note-editor p, .note-editor div {
     margin: 0 0 0.4em 0 !important;
@@ -2977,19 +2977,24 @@ export default function App() {
     : [...FONT_SIZES, fontSize].sort((a, b) => a - b);
 
   const sidebarStyle: CSSProperties = {
-    width: isSidebarOpen ? '280px' : '0px',
-    minWidth: isSidebarOpen ? '280px' : '0px',
+    position: 'absolute',
+    zIndex: 600,
+    left: 0,
+    top: 0,
+    width: '280px',
     margin: 0,
     height: 'calc(100vh - 34px)',
     borderRadius: 0,
     overflow: 'hidden',
-    padding: isSidebarOpen ? '16px' : '16px 0px',
-    border: 'none',
+    padding: '16px',
+    borderRight: '1.5px solid rgba(15, 23, 42, 0.12)',
     display: 'flex',
     flexDirection: 'column',
-    position: 'relative',
-    willChange: 'width, min-width, padding',
-    transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+    background: 'linear-gradient(135deg, rgba(245,247,250,0.98), rgba(235,240,246,0.98))',
+    willChange: 'transform',
+    transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+    transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+    boxShadow: isSidebarOpen ? '8px 0 30px rgba(15, 23, 42, 0.08)' : 'none',
   };
 
   const sidebarInnerStyle: CSSProperties = {
@@ -4149,7 +4154,8 @@ export default function App() {
             className="toggle-tab"
             style={{ 
               left: isSidebarOpen ? '281px' : '1px',
-              transition: 'left 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+              transition: 'left 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              zIndex: 601
             }}
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             title={isSidebarOpen ? 'Replier le panneau' : 'Déplier le panneau'}
@@ -4162,6 +4168,7 @@ export default function App() {
               flex: 1,
               minWidth: 0,
               margin: 0,
+              marginLeft: isSidebarOpen ? '280px' : '0px',
               height: 'calc(100vh - 34px)',
               display: 'flex',
               flexDirection: 'column',
