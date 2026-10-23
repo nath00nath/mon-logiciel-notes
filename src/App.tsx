@@ -38,7 +38,7 @@ interface Folder {
 }
 
 type PickerState = { kind: 'text' | 'highlight' | 'cellBg'; x: number; y: number } | null;
-type DropdownState = { kind: 'style' | 'font' | 'size' | 'lineHeight' | 'zoom'; x: number; y: number } | null;
+type DropdownState = { kind: 'style' | 'font' | 'size' | 'lineHeight' | 'zoom' | 'margin'; x: number; y: number } | null;
 type TopMenuState = 'file' | 'edit' | 'view' | 'insert' | 'format' | 'tools' | null;
 type Snapshot = { html: string; caret: number };
 
@@ -1379,6 +1379,7 @@ export default function App() {
   const [currentFontLabel, setCurrentFontLabel] = useState<string>('IBM Plex Sans');
   const [lineHeight, setLineHeight] = useState<string>('1.5');
   const [zoomPercent, setZoomPercent] = useState<number>(100);
+  const [marginSize, setMarginSize] = useState<'normal' | 'large' | 'etroit'>('normal');
 
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
@@ -2226,7 +2227,7 @@ export default function App() {
     setPicker({ kind, x: targetX, y: rect.bottom + 6 });
   };
 
-  const openDropdown = (e: ReactMouseEvent<HTMLElement>, kind: 'style' | 'font' | 'size' | 'lineHeight' | 'zoom') => {
+  const openDropdown = (e: ReactMouseEvent<HTMLElement>, kind: 'style' | 'font' | 'size' | 'lineHeight' | 'zoom' | 'margin') => {
     e.preventDefault();
     e.stopPropagation();
     saveCurrentSelection();
@@ -3674,6 +3675,29 @@ export default function App() {
               ))}
             </>
           )}
+
+          {dropdown.kind === 'margin' && (
+            <>
+              <div
+                className={`menu-item${marginSize === 'etroit' ? ' active' : ''}`}
+                onClick={() => { setMarginSize('etroit'); setDropdown(null); }}
+              >
+                Étroites (24px)
+              </div>
+              <div
+                className={`menu-item${marginSize === 'normal' ? ' active' : ''}`}
+                onClick={() => { setMarginSize('normal'); setDropdown(null); }}
+              >
+                Normales (40px)
+              </div>
+              <div
+                className={`menu-item${marginSize === 'large' ? ' active' : ''}`}
+                onClick={() => { setMarginSize('large'); setDropdown(null); }}
+              >
+                Larges (80px)
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -4344,13 +4368,22 @@ export default function App() {
                   overflow: 'visible',
                   flexShrink: 0,
                   whiteSpace: 'nowrap',
-                  width: isSidebarOpen ? '0px' : '215px',
+                  width: isSidebarOpen ? '0px' : '295px',
                   visibility: isSidebarOpen ? 'hidden' : 'visible',
                   willChange: 'width',
                   transition: 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s linear',
                 }}
               >
                 <div className="tb-sep" style={{ margin: '0 2px', flexShrink: 0 }} />
+                <button
+                  className="tb-custom-trigger"
+                  style={{ minWidth: '75px', padding: '0 7px', gap: '4px', flexShrink: 0 }}
+                  onClick={(e) => openDropdown(e, 'margin')}
+                  title="Marges de la page"
+                >
+                  <span>Marges</span>
+                  <span className={`tool-arrow${dropdown?.kind === 'margin' ? ' open' : ''}`}>▾</span>
+                </button>
                 <button className="tb-btn" style={{ flexShrink: 0 }} onMouseDown={(e) => { e.preventDefault(); editorRef.current?.focus(); handleInsertLink(e); }} title="Insérer un lien">🔗</button>
                 <button 
                   className={`tb-btn${isBulletList ? ' on' : ''}`} 
@@ -4468,7 +4501,7 @@ export default function App() {
                 style={{
                   flex: 1,
                   minHeight: 0,
-                  padding: '40px 64px',
+                  padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'large' ? '40px 96px' : '40px 64px',
                   outline: 'none',
                   fontSize: `${fontSize}px`,
                   zoom: (zoomPercent / 100) * 1.15,
@@ -4478,7 +4511,6 @@ export default function App() {
                   textAlign: 'left',
                   direction: 'ltr',
                   fontFamily: "'IBM Plex Sans', sans-serif",
-                  
                 }}
               />
             </div>
