@@ -1379,7 +1379,7 @@ export default function App() {
   const [currentFontLabel, setCurrentFontLabel] = useState<string>('IBM Plex Sans');
   const [lineHeight, setLineHeight] = useState<string>('1.5');
   const [zoomPercent, setZoomPercent] = useState<number>(100);
-  const [marginSize, setMarginSize] = useState<'normal' | 'large' | 'etroit'>('normal');
+  const [marginSize, setMarginSize] = useState<'normal' | 'large' | 'etroit' | 'tres_large'>('tres_large');
 
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
@@ -3696,6 +3696,12 @@ export default function App() {
               >
                 Larges (80px)
               </div>
+              <div
+                className={`menu-item${marginSize === 'tres_large' ? ' active' : ''}`}
+                onClick={() => { setMarginSize('tres_large'); setDropdown(null); }}
+              >
+                Très larges (100px)
+              </div>
             </>
           )}
         </div>
@@ -4368,13 +4374,12 @@ export default function App() {
                   overflow: 'visible',
                   flexShrink: 0,
                   whiteSpace: 'nowrap',
-                  width: isSidebarOpen ? '0px' : '295px',
+                  width: isSidebarOpen ? '0px' : '285px',
                   visibility: isSidebarOpen ? 'hidden' : 'visible',
                   willChange: 'width',
                   transition: 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s linear',
                 }}
               >
-                <div className="tb-sep" style={{ margin: '0 2px', flexShrink: 0 }} />
                 <button
                   className="tb-custom-trigger"
                   style={{ minWidth: '75px', padding: '0 7px', gap: '4px', flexShrink: 0 }}
@@ -4384,6 +4389,7 @@ export default function App() {
                   <span>Marges</span>
                   <span className={`tool-arrow${dropdown?.kind === 'margin' ? ' open' : ''}`}>▾</span>
                 </button>
+                <div className="tb-sep" style={{ margin: '0 2px', flexShrink: 0 }} />
                 <button className="tb-btn" style={{ flexShrink: 0 }} onMouseDown={(e) => { e.preventDefault(); editorRef.current?.focus(); handleInsertLink(e); }} title="Insérer un lien">🔗</button>
                 <button 
                   className={`tb-btn${isBulletList ? ' on' : ''}`} 
@@ -4501,7 +4507,7 @@ export default function App() {
                 style={{
                   flex: 1,
                   minHeight: 0,
-                  padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'large' ? '40px 96px' : '40px 64px',
+                  padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'normal' ? '40px 64px' : marginSize === 'large' ? '40px 80px' : '40px 100px',
                   outline: 'none',
                   fontSize: `${fontSize}px`,
                   zoom: (zoomPercent / 100) * 1.15,
