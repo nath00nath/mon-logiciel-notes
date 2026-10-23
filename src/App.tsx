@@ -4166,8 +4166,6 @@ export default function App() {
               display: 'flex',
               flexDirection: 'column',
               gap: 0,
-              willChange: 'width',
-              transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
             <div
@@ -4506,9 +4504,9 @@ export default function App() {
                   minHeight: 0,
                   padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'normal' ? '40px 64px' : marginSize === 'large' ? '40px 80px' : '40px 100px',
                   outline: 'none',
-                  fontSize: `${fontSize}px`,
+                  fontSize: '16px',
                   zoom: (zoomPercent / 100) * 1.15,
-                  lineHeight,
+                  lineHeight: '1.5',
                   color: '#0f172a',
                   overflowY: 'auto',
                   textAlign: 'left',
