@@ -3027,21 +3027,24 @@ export default function App() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 10px 12px 10px', borderBottom: '1px solid rgba(15,23,42,0.08)', marginBottom: '6px' }}>
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    referrerPolicy="no-referrer"
-                    style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-                  />
-                  <div style={{ overflow: 'hidden', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px 12px 12px 12px', borderBottom: '1px solid rgba(15,23,42,0.08)', marginBottom: '6px' }}>
+                  {/* Ligne 1 : O Nathan */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      referrerPolicy="no-referrer"
+                      style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                    />
+                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {user.name}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.74rem', color: '#16a34a', fontWeight: 500, lineHeight: 1 }}>
-                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
-                      <span>Connecté via Google</span>
-                    </div>
+                  </div>
+
+                  {/* Ligne 2 : ° Connecté via Google */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: '#16a34a', fontWeight: 500, paddingLeft: '2px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block', flexShrink: 0 }} />
+                    <span style={{ whiteSpace: 'nowrap' }}>Connecté via Google</span>
                   </div>
                 </div>
 
