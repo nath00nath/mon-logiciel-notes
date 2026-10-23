@@ -836,6 +836,11 @@ const GLOBAL_CSS = `
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
+  .note-editor p, .note-editor h1, .note-editor h2, .note-editor h3, .note-editor div {
+    margin-top: 0 !important;
+    margin-bottom: 0.35em !important;
+    line-height: inherit !important;
+  }
   .note-editor blockquote { margin: 0.6em 0; padding: 0.3em 1em; border-left: 3px solid #94a3b8; color: #475569; background: rgba(255,255,255,0.4); border-radius: 0 10px 10px 0; }
   .note-editor ul { padding-left: 1.5em; }
   .note-editor a { color: #1e293b; }
@@ -4161,6 +4166,8 @@ export default function App() {
               display: 'flex',
               flexDirection: 'column',
               gap: 0,
+              willChange: 'width',
+              transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
             <div
