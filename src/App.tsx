@@ -1132,6 +1132,7 @@ export default function App() {
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showStoragePopup, setShowStoragePopup] = useState(false);
 
   const [activeFolderId, setActiveFolderId] = useState<string>(saved.activeFolderId);
   const [activeNoteId, setActiveNoteId] = useState<string>(saved.activeNoteId);
@@ -1140,12 +1141,21 @@ export default function App() {
   const [lastSaveTime, setLastSaveTime] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(() => {
+    return localStorage.getItem('plume-google-drive-token');
+  });
+  const [driveFileId, setDriveFileId] = useState<string | null>(null);
+  const [driveQuota, setDriveQuota] = useState<{ used: number; total: number } | null>(null);
+
   const handleGoogleLogin = async (forceSelectAccount = false) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: window.location.origin,
-        queryParams: forceSelectAccount ? { prompt: 'select_account' } : undefined,
+        scopes: 'https://www.googleapis.com/auth/drive.file',
+        queryParams: forceSelectAccount
+          ? { prompt: 'select_account consent', access_type: 'offline' }
+          : { access_type: 'offline' },
       },
     });
     if (error) {
@@ -1236,10 +1246,14 @@ export default function App() {
       }
     }
 
-    // 2. Session active Supabase
+    // 2. Session active Supabase et capture du token Google Drive
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         saveAndSetUser(extractUser(session.user));
+        if (session.provider_token) {
+          setGoogleAccessToken(session.provider_token);
+          localStorage.setItem('plume-google-drive-token', session.provider_token);
+        }
       }
     });
 
@@ -1247,8 +1261,16 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         saveAndSetUser(extractUser(session.user));
+        if (session.provider_token) {
+          setGoogleAccessToken(session.provider_token);
+          localStorage.setItem('plume-google-drive-token', session.provider_token);
+        }
       } else if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('ksiazka-google-user');
+        localStorage.removeItem('plume-google-user');
+        localStorage.removeItem('plume-google-drive-token');
+        setGoogleAccessToken(null);
+        setDriveFileId(null);
+        setDriveQuota(null);
         setUser(null);
         setFolders(DEFAULT_FOLDERS);
         setActiveFolderId('1');
@@ -1262,55 +1284,96 @@ export default function App() {
     };
   }, []);
 
-  // Charger les notes depuis Supabase dès qu'un utilisateur est connecté
+  // Chargement initial depuis Google Drive et lecture du quota réel (15 Go)
   useEffect(() => {
+    if (!googleAccessToken || !user) return;
     let isMounted = true;
 
-    const syncWithCloud = async () => {
-      // On récupère directement la session authentifiée officielle
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUid = session?.user?.id || user?.id;
-
-      if (!currentUid) return;
-
-      const { data, error } = await supabase
-        .from('user_data')
-        .select('*')
-        .eq('user_id', currentUid)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Erreur chargement Cloud:', error.message);
-        return;
-      }
-
-      if (!isMounted) return;
-
-      if (data && Array.isArray(data.folders) && data.folders.length > 0) {
-        setFolders(data.folders);
-        if (data.active_folder_id) setActiveFolderId(data.active_folder_id);
-        if (data.active_note_id) setActiveNoteId(data.active_note_id);
-        if (data.collapsed_folders) setCollapsedFolders(data.collapsed_folders);
-
-        // Mise à jour immédiate de l'éditeur avec la note active chargée depuis Supabase
-        const activeF = data.folders.find((f: any) => f.id === (data.active_folder_id || '1')) || data.folders[0];
-        const activeN = activeF?.notes?.find((n: any) => n.id === (data.active_note_id || 'n1')) || activeF?.notes?.[0];
-        const activeT = activeN?.tabs?.find((t: any) => t.id === activeN?.activeTabId) || activeN?.tabs?.[0];
-
-        if (editorRef.current && activeT) {
-          editorRef.current.innerHTML = activeT.content || '';
+    const loadDriveData = async () => {
+      try {
+        // 1. Lire le quota réel du compte Google Drive
+        const quotaRes = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
+          headers: { Authorization: `Bearer ${googleAccessToken}` },
+        });
+        if (quotaRes.ok) {
+          const quotaData = await quotaRes.json();
+          if (quotaData.storageQuota) {
+            setDriveQuota({
+              used: parseInt(quotaData.storageQuota.usage || '0', 10),
+              total: parseInt(quotaData.storageQuota.limit || '16106127360', 10),
+            });
+          }
         }
+
+        // 2. Chercher le fichier de notes sur Google Drive
+        const searchRes = await fetch(
+          "https://www.googleapis.com/drive/v3/files?q=name='plume_notes_data.json'+and+trashed=false&fields=files(id,name)",
+          { headers: { Authorization: `Bearer ${googleAccessToken}` } }
+        );
+        const searchData = await searchRes.json();
+        let targetId = searchData.files?.[0]?.id;
+
+        if (targetId) {
+          setDriveFileId(targetId);
+          const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${targetId}?alt=media`, {
+            headers: { Authorization: `Bearer ${googleAccessToken}` },
+          });
+          if (fileRes.ok && isMounted) {
+            const data = await fileRes.json();
+            if (data && Array.isArray(data.folders) && data.folders.length > 0) {
+              setFolders(data.folders);
+              if (data.activeFolderId) setActiveFolderId(data.activeFolderId);
+              if (data.activeNoteId) setActiveNoteId(data.activeNoteId);
+              if (data.collapsedFolders) setCollapsedFolders(data.collapsedFolders);
+
+              const activeF = data.folders.find((f: any) => f.id === (data.activeFolderId || '1')) || data.folders[0];
+              const activeN = activeF?.notes?.find((n: any) => n.id === (data.activeNoteId || 'n1')) || activeF?.notes?.[0];
+              const activeT = activeN?.tabs?.find((t: any) => t.id === activeN?.activeTabId) || activeN?.tabs?.[0];
+              if (editorRef.current && activeT) {
+                editorRef.current.innerHTML = activeT.content || '';
+              }
+            }
+          }
+        } else {
+          // Créer le fichier initial sur Google Drive
+          const initialPayload = JSON.stringify({
+            folders,
+            activeFolderId,
+            activeNoteId,
+            collapsedFolders,
+          });
+          const createRes = await fetch(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${googleAccessToken}`,
+                'Content-Type': 'multipart/related; boundary=foo_bar_baz',
+              },
+              body:
+                '--foo_bar_baz\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' +
+                JSON.stringify({ name: 'plume_notes_data.json', mimeType: 'application/json' }) +
+                '\r\n--foo_bar_baz\r\nContent-Type: application/json\r\n\r\n' +
+                initialPayload +
+                '\r\n--foo_bar_baz--',
+            }
+          );
+          if (createRes.ok) {
+            const created = await createRes.json();
+            if (created.id && isMounted) setDriveFileId(created.id);
+          }
+        }
+      } catch (err) {
+        console.error('Erreur chargement Google Drive:', err);
       }
     };
 
-    if (user) {
-      syncWithCloud();
-    }
+    loadDriveData();
 
     return () => {
       isMounted = false;
     };
-  }, [user?.id]);
+  }, [googleAccessToken, user?.id]);
 
   const [fontList, setFontList] = useState<string[]>(SYSTEM_FONTS);
   const [currentFontLabel, setCurrentFontLabel] = useState<string>('IBM Plex Sans');
@@ -1454,30 +1517,39 @@ export default function App() {
 
   useEffect(() => {
     const t = window.setTimeout(async () => {
-      if (user) {
+      if (user && googleAccessToken && driveFileId) {
         setIsSaving(true);
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        const targetId = authUser?.id || user.id;
-
-        if (targetId) {
-          const { error } = await supabase.from('user_data').upsert({
-            user_id: targetId,
+        try {
+          const payload = JSON.stringify({
             folders,
-            active_folder_id: activeFolderId,
-            active_note_id: activeNoteId,
-            collapsed_folders: collapsedFolders,
+            activeFolderId,
+            activeNoteId,
+            collapsedFolders,
             updated_at: new Date().toISOString(),
           });
 
-          if (error) {
-            console.error('Erreur sauvegarde Supabase:', error.message);
-          } else {
+          const updateRes = await fetch(
+            `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+            {
+              method: 'PATCH',
+              headers: {
+                Authorization: `Bearer ${googleAccessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: payload,
+            }
+          );
+
+          if (updateRes.ok) {
             const now = new Date();
             setLastSaveTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
           }
+        } catch (err) {
+          console.error('Erreur sauvegarde Google Drive:', err);
+        } finally {
+          setTimeout(() => setIsSaving(false), 600);
         }
-        setTimeout(() => setIsSaving(false), 600);
-      } else {
+      } else if (!user) {
         try {
           sessionStorage.setItem(
             STORAGE_KEY,
@@ -1496,7 +1568,7 @@ export default function App() {
     }, 400);
 
     return () => window.clearTimeout(t);
-  }, [folders, activeFolderId, activeNoteId, collapsedFolders, user]);
+  }, [folders, activeFolderId, activeNoteId, collapsedFolders, user, googleAccessToken, driveFileId]);
 
   useEffect(() => {
   const handleBeforeUnload = () => {
@@ -1549,6 +1621,7 @@ export default function App() {
       setActiveTopMenu(null);
       setShowTablePicker(false);
       setShowUserMenu(false);
+      setShowStoragePopup(false);
       if (!target?.closest('td') && !target?.closest('th')) {
         clearCellSelection();
       }
@@ -2958,31 +3031,140 @@ export default function App() {
           <div className={`top-menu-item${activeTopMenu === 'format' ? ' active' : ''}`} onClick={(e) => toggleTopMenu(e, 'format')}>Format</div>
           <div className={`top-menu-item${activeTopMenu === 'tools' ? ' active' : ''}`} onClick={(e) => toggleTopMenu(e, 'tools')}>Outils</div>
 
-          <div className="user-menu-container" style={{ position: 'relative', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {user && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#64748b' }}>
-                {lastSaveTime && <span>Enregistré à {lastSaveTime}</span>}
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{
-                    transition: 'transform 0.4s ease, color 0.3s ease',
-                    transform: isSaving ? 'rotate(180deg) scale(1.2)' : 'none',
-                    color: isSaving ? '#2563eb' : '#64748b',
-                  }}
-                >
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                  <polyline points="17 21 17 13 7 13 7 21" />
-                  <polyline points="7 3 7 8 15 8" />
-                </svg>
-              </div>
-            )}
+          <div className="user-menu-container" style={{ position: 'relative', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {user && (() => {
+              const usedBytes = driveQuota?.used ?? 0;
+              const totalBytes = driveQuota?.total ?? 16106127360; // 15 Go par défaut
+              const usedPercent = Math.min(100, Math.max(0.5, (usedBytes / totalBytes) * 100));
+
+              const formatSize = (bytes: number) => {
+                if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+                if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+                return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} Go`;
+              };
+
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#64748b' }}>
+                    {lastSaveTime && <span>Enregistré à {lastSaveTime}</span>}
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{
+                        transition: 'transform 0.4s ease, color 0.3s ease',
+                        transform: isSaving ? 'rotate(180deg) scale(1.2)' : 'none',
+                        color: isSaving ? '#2563eb' : '#64748b',
+                      }}
+                    >
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                      <polyline points="17 21 17 13 7 13 7 21" />
+                      <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                  </div>
+
+                  {/* Barre de complétion Google Drive cliquable */}
+                  <div style={{ position: 'relative' }}>
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowStoragePopup((prev) => !prev);
+                        setShowUserMenu(false);
+                      }}
+                      title="Espace Google Drive utilisé (cliquer pour le détail)"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '3px 8px',
+                        borderRadius: '7px',
+                        cursor: 'pointer',
+                        background: 'rgba(15, 23, 42, 0.04)',
+                        border: '1px solid rgba(15, 23, 42, 0.08)',
+                        transition: 'background 0.2s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(15, 23, 42, 0.08)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(15, 23, 42, 0.04)')}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M8.5 3.5h7l6 10.5h-7z" fill="#f59e0b" />
+                        <path d="M2.5 14l3.5-6 6 10.5-3.5 6z" fill="#2563eb" />
+                        <path d="M8.5 24.5l3.5-6h12l-3.5 6z" fill="#16a34a" />
+                      </svg>
+                      <div
+                        style={{
+                          width: '46px',
+                          height: '5px',
+                          borderRadius: '3px',
+                          background: 'rgba(15, 23, 42, 0.12)',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${usedPercent}%`,
+                            height: '100%',
+                            borderRadius: '3px',
+                            background: usedPercent > 90 ? '#ef4444' : usedPercent > 70 ? '#f59e0b' : '#2563eb',
+                            transition: 'width 0.3s ease',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Popup d'informations détaillées au clic */}
+                    {showStoragePopup && (
+                      <div
+                        className="glass menu"
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: '34px',
+                          minWidth: '240px',
+                          padding: '12px 14px',
+                          zIndex: 960,
+                          background: '#ffffff',
+                          boxShadow: '0 12px 28px rgba(0, 0, 0, 0.12)',
+                          borderRadius: '12px',
+                          cursor: 'default',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>Stockage Google Drive</span>
+                        </div>
+
+                        <div style={{ height: '6px', borderRadius: '4px', background: 'rgba(15, 23, 42, 0.08)', overflow: 'hidden', marginBottom: '8px' }}>
+                          <div
+                            style={{
+                              width: `${usedPercent}%`,
+                              height: '100%',
+                              borderRadius: '4px',
+                              background: usedPercent > 90 ? '#ef4444' : usedPercent > 70 ? '#f59e0b' : '#2563eb',
+                              transition: 'width 0.3s ease',
+                            }}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#475569', fontWeight: 600 }}>
+                          <span>{formatSize(usedBytes)} utilisés</span>
+                          <span style={{ color: '#94a3b8' }}>sur {formatSize(totalBytes)}</span>
+                        </div>
+
+                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '6px' }}>
+                          {usedPercent.toFixed(1)}% du quota total de 15 Go utilisé
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             <button
               onClick={() => {
@@ -3022,7 +3204,7 @@ export default function App() {
               )}
             </button>
 
-            {/* Menu Pop-up au clic sur l'avatar */}
+            {/* Menu Pop-up au clic sur l'avatar : format O Nathan */}
             {showUserMenu && user && (
               <div
                 className="glass menu"
