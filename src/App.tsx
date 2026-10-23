@@ -1864,71 +1864,66 @@ export default function App() {
       ignoreSelectionChangeRef.current = false;
       checkSelectionFormat();
     } else {
-      // 1. On calcule exactement quels outils doivent être actifs après ce clic
-      const nextBold = command === 'bold' ? !isBold : isBold;
-      const nextItalic = command === 'italic' ? !isItalic : isItalic;
-      const nextUnderline = command === 'underline' ? !isUnderline : isUnderline;
-      const nextStrike = command === 'strikeThrough' ? !isStrike : isStrike;
-
       const sel = window.getSelection();
+      const currentText = ed.innerText.replace(/[\n\u200B\s]/g, '');
+
+      // On vérifie si la ligne ou le bloc autour du curseur est totalement vide de texte
+      let isLineEmpty = false;
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
-
         if (range.collapsed) {
-          // Si le curseur est déjà posé sur une ancre invisible \u200B (sans vrai texte tapé),
-          // on nettoie l'ancienne structure d'ancrage pour la reconstruire proprement
-          const container = range.startContainer;
-          if (container.nodeType === Node.TEXT_NODE && container.textContent === '\u200B') {
-            let topInline: Node = container;
-            while (
-              topInline.parentNode &&
-              topInline.parentNode !== ed &&
-              ['B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL'].includes(
-                (topInline.parentNode as HTMLElement).tagName
-              )
-            ) {
-              topInline = topInline.parentNode;
-            }
-            const parent = topInline.parentNode;
-            if (parent) {
-              const idx = Array.from(parent.childNodes).indexOf(topInline as ChildNode);
-              parent.removeChild(topInline);
-              const cleanRange = document.createRange();
-              cleanRange.setStart(parent, idx);
-              cleanRange.collapse(true);
-              sel.removeAllRanges();
-              sel.addRange(cleanRange);
-            }
+          let block: Node | null = range.startContainer;
+          while (block && block !== ed && !['P', 'DIV', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'LI', 'TD'].includes((block as HTMLElement).tagName)) {
+            block = block.parentNode;
           }
-
-          // Construction de la nouvelle pile de balises correspondant aux boutons actifs
-          const activeRange = sel.getRangeAt(0);
-          const zwsp = document.createTextNode('\u200B');
-          let currentNode: Node = zwsp;
-
-          if (nextStrike) { const s = document.createElement('s'); s.appendChild(currentNode); currentNode = s; }
-          if (nextUnderline) { const u = document.createElement('u'); u.appendChild(currentNode); currentNode = u; }
-          if (nextItalic) { const i = document.createElement('i'); i.appendChild(currentNode); currentNode = i; }
-          if (nextBold) { const b = document.createElement('b'); b.appendChild(currentNode); currentNode = b; }
-
-          activeRange.insertNode(currentNode);
-
-          // On verrouille le curseur pile après le caractère invisible à l'intérieur des balises
-          const caretRange = document.createRange();
-          caretRange.setStart(zwsp, 1);
-          caretRange.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(caretRange);
-        } else {
-          // Si du texte est surligné, fonctionnement standard
-          document.execCommand(command, false);
+          const blockText = (block?.textContent || '').replace(/[\n\u200B\s]/g, '');
+          isLineEmpty = !currentText || !blockText;
         }
       }
 
-      setIsBold(nextBold);
-      setIsItalic(nextItalic);
-      setIsUnderline(nextUnderline);
-      setIsStrike(nextStrike);
+      if (isLineEmpty && sel && sel.rangeCount > 0) {
+        // Mode curseur vide : on gère la pile sans jamais risquer de supprimer du texte
+        const nextBold = command === 'bold' ? !isBold : isBold;
+        const nextItalic = command === 'italic' ? !isItalic : isItalic;
+        const nextUnderline = command === 'underline' ? !isUnderline : isUnderline;
+        const nextStrike = command === 'strikeThrough' ? !isStrike : isStrike;
+
+        let block: Node | null = sel.getRangeAt(0).startContainer;
+        while (block && block !== ed && !['P', 'DIV', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'LI', 'TD'].includes((block as HTMLElement).tagName)) {
+          block = block.parentNode;
+        }
+
+        const targetContainer = (block as HTMLElement) || ed;
+        targetContainer.innerHTML = '';
+
+        const zwsp = document.createTextNode('\u200B');
+        let currentNode: Node = zwsp;
+
+        if (nextStrike) { const s = document.createElement('s'); s.appendChild(currentNode); currentNode = s; }
+        if (nextUnderline) { const u = document.createElement('u'); u.appendChild(currentNode); currentNode = u; }
+        if (nextItalic) { const i = document.createElement('i'); i.appendChild(currentNode); currentNode = i; }
+        if (nextBold) { const b = document.createElement('b'); b.appendChild(currentNode); currentNode = b; }
+
+        targetContainer.appendChild(currentNode);
+
+        const caretRange = document.createRange();
+        caretRange.setStart(zwsp, 1);
+        caretRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(caretRange);
+
+        setIsBold(nextBold);
+        setIsItalic(nextItalic);
+        setIsUnderline(nextUnderline);
+        setIsStrike(nextStrike);
+      } else {
+        // Mode avec du texte existant : exécution standard native sans altérer le texte
+        document.execCommand(command, false);
+        if (command === 'bold') setIsBold((prev) => !prev);
+        if (command === 'italic') setIsItalic((prev) => !prev);
+        if (command === 'underline') setIsUnderline((prev) => !prev);
+        if (command === 'strikeThrough') setIsStrike((prev) => !prev);
+      }
 
       saveCurrentSelection();
       setTimeout(() => {
@@ -2959,19 +2954,20 @@ export default function App() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '6px 8px 10px 8px', borderBottom: '1px solid rgba(15,23,42,0.08)', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 10px 12px 10px', borderBottom: '1px solid rgba(15,23,42,0.08)', marginBottom: '6px' }}>
                   <img
                     src={user.avatarUrl}
                     alt={user.name}
                     referrerPolicy="no-referrer"
-                    style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, marginTop: '2px' }}
+                    style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
                   />
-                  <div style={{ overflow: 'hidden', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', lineHeight: '36px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ overflow: 'hidden', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {user.name}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 500, whiteSpace: 'nowrap', marginTop: '-4px' }}>
-                      ● Connecté via Google
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.74rem', color: '#16a34a', fontWeight: 500, lineHeight: 1 }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
+                      <span>Connecté via Google</span>
                     </div>
                   </div>
                 </div>
