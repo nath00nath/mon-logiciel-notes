@@ -242,7 +242,7 @@ const TABLE_DEFAULT_COL_WIDTH = 140;
 const MIN_COL_WIDTH = 30;
 
 const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Fira+Code:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lora:ital,wght@0,400;0,600;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Roboto:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:ital,wght@0,400..800;1,400..800&family=Fira+Code:ital,wght@0,400..700;1,400..700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Merriweather:ital,wght@0,400;0,700;1,400;1,700&family=Montserrat:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Roboto:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
   :root {
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -1704,50 +1704,40 @@ export default function App() {
         }
 
         const px = Math.round(parseFloat(computed.fontSize));
-      if (!isNaN(px)) setFontSize(px);
-    }
+        if (!isNaN(px)) setFontSize(px);
 
-    // Détection directe via l'arbre DOM pour éviter les bugs de queryCommandState
-    let hasBold = false;
-    let hasItalic = false;
-    let hasUnderline = false;
-    let hasStrike = false;
-
-    let checkEl: HTMLElement | null = node instanceof HTMLElement ? node : node?.parentElement || null;
-    while (checkEl && checkEl !== editor) {
-      const tag = checkEl.tagName;
-      const fw = checkEl.style.fontWeight;
-      const fs = checkEl.style.fontStyle;
-      const td = `${checkEl.style.textDecoration} ${checkEl.style.textDecorationLine}`;
-
-      if (tag === 'B' || tag === 'STRONG' || fw === 'bold' || Number(fw) >= 600) hasBold = true;
-      if (tag === 'I' || tag === 'EM' || fs === 'italic') hasItalic = true;
-      if (tag === 'U' || td.includes('underline')) hasUnderline = true;
-      if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL' || td.includes('line-through')) hasStrike = true;
-      checkEl = checkEl.parentElement;
-    }
-
-    setIsBold(hasBold);
-    setIsItalic(hasItalic);
-    setIsUnderline(hasUnderline);
-    setIsStrike(hasStrike);
-    setIsBulletList(document.queryCommandState('insertUnorderedList'));
-
-    // Détection dynamique de l'alignement sous le curseur
-      if (node && node instanceof HTMLElement) {
-        let currentEl: HTMLElement | null = node;
-        let detectedAlign: 'left' | 'center' | 'right' | 'full' = 'left';
-        while (currentEl && currentEl !== editor) {
-          const align = currentEl.style.textAlign || window.getComputedStyle(currentEl).textAlign;
-          if (align === 'center') { detectedAlign = 'center'; break; }
-          if (align === 'right') { detectedAlign = 'right'; break; }
-          if (align === 'justify') { detectedAlign = 'full'; break; }
-          if (align === 'left' || align === 'start') { detectedAlign = 'left'; break; }
-          currentEl = currentEl.parentElement;
-        }
-        setAlignment(detectedAlign);
+        const align = computed.textAlign;
+        if (align === 'center') setAlignment('center');
+        else if (align === 'right') setAlignment('right');
+        else if (align === 'justify') setAlignment('full');
+        else setAlignment('left');
       }
-      
+
+      let hasBold = false;
+      let hasItalic = false;
+      let hasUnderline = false;
+      let hasStrike = false;
+
+      let checkEl: HTMLElement | null = node instanceof HTMLElement ? node : node?.parentElement || null;
+      while (checkEl && checkEl !== editor) {
+        const tag = checkEl.tagName;
+        const fw = checkEl.style.fontWeight;
+        const fs = checkEl.style.fontStyle;
+        const td = `${checkEl.style.textDecoration} ${checkEl.style.textDecorationLine}`;
+
+        if (tag === 'B' || tag === 'STRONG' || fw === 'bold' || Number(fw) >= 600) hasBold = true;
+        if (tag === 'I' || tag === 'EM' || fs === 'italic') hasItalic = true;
+        if (tag === 'U' || td.includes('underline')) hasUnderline = true;
+        if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL' || td.includes('line-through')) hasStrike = true;
+        checkEl = checkEl.parentElement;
+      }
+
+      setIsBold(hasBold);
+      setIsItalic(hasItalic);
+      setIsUnderline(hasUnderline);
+      setIsStrike(hasStrike);
+      setIsBulletList(document.queryCommandState('insertUnorderedList'));
+
       const block = (document.queryCommandValue('formatBlock') || '').toLowerCase();
       setCurrentStyle(['p', 'h1', 'h2', 'h3'].includes(block) ? block : 'p');
       setIsQuote(block === 'blockquote');
@@ -2982,7 +2972,7 @@ export default function App() {
     : [...FONT_SIZES, fontSize].sort((a, b) => a - b);
 
   const sidebarStyle: CSSProperties = {
-    width: isSidebarOpen ? '280px' : '1px',
+    width: isSidebarOpen ? '280px' : '0px',
     minWidth: isSidebarOpen ? '280px' : '0px',
     margin: 0,
     height: 'calc(100vh - 34px)',
@@ -2994,7 +2984,7 @@ export default function App() {
     flexDirection: 'column',
     position: 'relative',
     willChange: 'width, min-width, padding',
-    transition: 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.4s cubic-bezier(0.16, 1, 0.3, 1), padding 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+    transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
   };
 
   const sidebarInnerStyle: CSSProperties = {
