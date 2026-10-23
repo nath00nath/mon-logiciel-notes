@@ -528,24 +528,36 @@ const GLOBAL_CSS = `
     box-shadow: 0 12px 22px rgba(15,23,42,0.32);
   }
 
-  .brand .pg { transform-origin: 12px 12px; opacity: 0; }
-  .brand:hover .pg { animation: bookFlip 2s ease-in-out infinite; }
-  .brand:hover .pg2 { animation-delay: 0.2s; }
-  .brand:hover .pg3 { animation-delay: 0.4s; }
-  .brand:hover .ribbon { animation: ribbonWag 0.9s ease-in-out infinite; }
-  .brand .ribbon { transform-origin: 16.7px 5px; }
-
-  @keyframes bookFlip {
-    0%   { transform: scaleX(1); opacity: 0; }
-    8%   { transform: scaleX(1); opacity: 1; }
-    38%  { transform: translateY(-0.7px) scaleX(0.05); opacity: 1; }
-    64%  { transform: scaleX(-1); opacity: 1; }
-    84%  { transform: scaleX(-1); opacity: 1; }
-    100% { transform: scaleX(-1); opacity: 0; }
+  .feather-quill {
+    transform-origin: 6px 18px;
+    transition: transform 0.4s var(--spring);
   }
-  @keyframes ribbonWag {
-    0%, 100% { transform: rotate(0deg); }
-    50%      { transform: rotate(7deg); }
+  .brand:hover .feather-quill {
+    animation: quillWrite 2.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  }
+  .brand:hover .feather-barbs {
+    animation: barbsBreeze 1.8s ease-in-out infinite alternate;
+    transform-origin: 12px 10px;
+  }
+  .brand:hover .quill-nib-glow {
+    animation: nibShine 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes quillWrite {
+    0%   { transform: rotate(0deg) translate(0, 0); }
+    20%  { transform: rotate(-10deg) translate(-1px, -1.5px); }
+    45%  { transform: rotate(-4deg) translate(1px, -0.5px); }
+    70%  { transform: rotate(-12deg) translate(-0.5px, -1.2px); }
+    100% { transform: rotate(0deg) translate(0, 0); }
+  }
+  @keyframes barbsBreeze {
+    0%   { transform: skewX(0deg) scale(1); }
+    50%  { transform: skewX(-2deg) scale(1.02); }
+    100% { transform: skewX(2.5deg) scale(0.98); }
+  }
+  @keyframes nibShine {
+    0%   { opacity: 0.3; filter: drop-shadow(0 0 1px #f59e0b); }
+    100% { opacity: 0.95; filter: drop-shadow(0 0 4px #fbbf24); }
   }
 
   .brand-word {
@@ -3740,15 +3752,52 @@ export default function App() {
               >
                 <div className="brand" aria-label="plume">
                   <span className="brand-mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="31" height="31">
-                      <path d="M12 6.6C10.3 5.4 8 5 5.2 5v11.6c2.8 0 5.1.4 6.8 1.6z" fill="#ffffff" fillOpacity="0.95" />
-                      <path d="M12 6.6c1.7-1.2 4-1.6 6.8-1.6v11.6c-2.8 0-5.1.4-6.8 1.6z" fill="#ffffff" fillOpacity="0.72" />
-                      <g stroke="#0f172a" strokeOpacity="0.28" strokeWidth="0.35">
-                        <path className="pg pg1" d="M12 6.6c1.7-1.2 4-1.6 6.8-1.6v11.6c-2.8 0-5.1.4-6.8 1.6z" fill="#ffffff" fillOpacity="0.98" />
-                        <path className="pg pg2" d="M12 6.6c1.7-1.2 4-1.6 6.8-1.6v11.6c-2.8 0-5.1.4-6.8 1.6z" fill="#e2e8f0" fillOpacity="0.98" />
-                        <path className="pg pg3" d="M12 6.6c1.7-1.2 4-1.6 6.8-1.6v11.6c-2.8 0-5.1.4-6.8 1.6z" fill="#cbd5e1" fillOpacity="0.98" />
+                    {/* Dessin élégant d'une plume d'écriture avec rachis et barbes texturées */}
+                    <svg viewBox="0 0 24 24" width="28" height="28" className="feather-quill" fill="none">
+                      <g className="feather-barbs">
+                        {/* Aile / Barbes de la plume */}
+                        <path
+                          d="M19.8 4.2C16.5 4 11.2 6.8 9 10.8c-1.8 3.2-2.1 5.6-2.5 7.4 1.8-.4 4.2-.7 7.4-2.5 4-2.2 6.8-7.5 6.6-10.8-.2-.5-.4-.7-.7-.7z"
+                          fill="#ffffff"
+                          fillOpacity="0.95"
+                        />
+                        {/* Découpes détaillées et ombres douces du duvet */}
+                        <path
+                          d="M17.5 7.2l-3.2 2.6M15 11l-3 2.4M12 14.5l-2.2 1.8"
+                          stroke="#cbd5e1"
+                          strokeWidth="0.6"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M19.2 4.8c-1.8 1.4-3.5 3.5-4.8 5.8-1.5 2.6-2.2 5.2-2.6 7.6 1.4-.4 3.4-1.2 5.2-2.6 2.3-1.8 4-4.2 4.6-6.4-.6-2.2-1.4-3.6-2.4-4.4z"
+                          fill="#f1f5f9"
+                          fillOpacity="0.75"
+                        />
                       </g>
-                      <path className="ribbon" d="M15.4 5.1v4.3l1.3-1 1.3 1V5" fill="#94a3b8" />
+                      
+                      {/* Rachis / Tige centrale de la plume */}
+                      <path
+                        d="M20.2 3.8C16.8 7.5 12 12.8 6.5 18.2"
+                        stroke="#0f172a"
+                        strokeWidth="1"
+                        strokeLinecap="round"
+                      />
+
+                      {/* Calame et Bec / Pointe métallique d'écriture */}
+                      <path
+                        d="M6.5 18.2l-2 2.6c-.3.4-.6.5-1 .5h-.2c-.4-.1-.6-.4-.5-.8l.8-2.6 2.9.3z"
+                        fill="#f8fafc"
+                        stroke="#0f172a"
+                        strokeWidth="0.7"
+                      />
+                      {/* Fente et pointe dorée lumineuse */}
+                      <path
+                        d="M4.3 19.8l1.4-1.4"
+                        stroke="#f59e0b"
+                        strokeWidth="0.8"
+                        strokeLinecap="round"
+                        className="quill-nib-glow"
+                      />
                     </svg>
 
                     <div className="bfly-stage">
