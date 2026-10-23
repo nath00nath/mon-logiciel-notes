@@ -4154,8 +4154,7 @@ export default function App() {
             className="toggle-tab"
             style={{ 
               left: isSidebarOpen ? '281px' : '1px',
-              transition: 'left 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-              zIndex: 601
+              transition: 'left 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             title={isSidebarOpen ? 'Replier le panneau' : 'Déplier le panneau'}
@@ -4168,7 +4167,6 @@ export default function App() {
               flex: 1,
               minWidth: 0,
               margin: 0,
-              marginLeft: isSidebarOpen ? '280px' : '0px',
               height: 'calc(100vh - 34px)',
               display: 'flex',
               flexDirection: 'column',
@@ -4467,22 +4465,21 @@ export default function App() {
             )}
 
             <div
-              className="glass"
+              className="glass scroll"
               style={{
                 flex: 1,
                 minHeight: 0,
                 borderRadius: 0,
                 border: 'none',
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
+                display: 'block',
+                overflowY: 'auto',
                 position: 'relative',
               }}
             >
               <div
                 key={activeTab ? `${activeNote?.id}-${activeTab.id}` : 'none'}
                 ref={editorRef}
-                className="note-editor scroll"
+                className="note-editor"
                 contentEditable={!!activeTab}
                 suppressContentEditableWarning
                 onContextMenu={handleEditorContextMenu}
@@ -4507,15 +4504,13 @@ export default function App() {
                 onMouseUp={checkSelectionFormat}
                 onKeyUp={checkSelectionFormat}
                 style={{
-                  flex: 1,
-                  minHeight: 0,
+                  minHeight: '100%',
                   padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'normal' ? '40px 64px' : marginSize === 'large' ? '40px 80px' : '40px 100px',
                   outline: 'none',
                   fontSize: '16px',
                   zoom: (zoomPercent / 100) * 1.15,
                   lineHeight: '1.5',
                   color: '#0f172a',
-                  overflowY: 'auto',
                   textAlign: 'left',
                   direction: 'ltr',
                   fontFamily: "'IBM Plex Sans', sans-serif",
