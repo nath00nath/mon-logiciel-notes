@@ -1031,7 +1031,7 @@ const GLOBAL_CSS = `
     }
   }
 
-  .note-editor p:focus, .note-editor div:focus {
+  .note-editor.is-typing-effect {
     animation: retroTypeEffect 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   }
 `;
@@ -4952,7 +4952,7 @@ export default function App() {
               <div
                 key={activeTab ? `${activeNote?.id}-${activeTab.id}` : 'none'}
                 ref={editorRef}
-                className="note-editor"
+                className={`note-editor ${isTypingCaret ? 'is-typing-effect' : ''}`}
                 contentEditable={!!activeTab}
                 suppressContentEditableWarning
                 onContextMenu={handleEditorContextMenu}
