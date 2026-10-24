@@ -864,10 +864,11 @@ const GLOBAL_CSS = `
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeSpeed;
     cursor: text !important;
-    caret-shape: block !important; /* Forme de bloc large */
+    caret-shape: block !important; /* Pour les navigateurs compatibles Chromium/WebKit */
+    caret-color: var(--text-color) !important; /* S'adapte dynamiquement à la couleur du thème */
     min-height: 100%;
     outline: none;
-    transition: caret-color 0.2s ease, color 0.2s ease;
+    transition: caret-color 0.3s ease, color 0.3s ease;
   }
 
   /* L'animation quand on écrit (léger sursaut/pulse de la zone de texte) */
@@ -4814,7 +4815,7 @@ export default function App() {
                   zoom: (zoomPercent / 100) * 1.15,
                   lineHeight: lineHeight,
                   color: activeTheme.text,
-                  caretColor: activeTheme.text,
+                  caretColor: activeTheme.text, /* Couleur dynamique du bloc selon le thème */
                   textAlign: 'left',
                   direction: 'ltr',
                   fontFamily: "'IBM Plex Sans', sans-serif",
