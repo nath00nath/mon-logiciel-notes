@@ -864,8 +864,12 @@ const GLOBAL_CSS = `
     text-rendering: optimizeSpeed;
     cursor: var(--editor-cursor, text) !important;
     caret-color: var(--caret-custom-color, var(--text-color)) !important;
+    caret-shape: var(--caret-shape-val, auto) !important;
     min-height: 100%;
   }
+  /* Styles personnalisés pour le curseur (épaisseur, machine à écrire, etc.) */
+  .note-editor[style*="caret-width: 3px"] { caret-width: 3px; }
+  .note-editor[style*="caret-width: 6px"] { caret-width: 6px; }
   .note-editor:empty::before,
   .note-editor p:empty::before {
     content: '';
@@ -3563,43 +3567,60 @@ export default function App() {
               </div>
 
               <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
-              <div style={{ padding: '0 8px 4px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Curseur (Couleur & Style)</span>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  {(['text', 'default', 'crosshair'] as const).map((cs) => (
+              
+              {/* Titre Curseur centré */}
+              <div style={{ textAlign: 'center', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-color)', marginBottom: '6px' }}>
+                Curseur
+              </div>
+
+              {/* Options de style du curseur sur 2 lignes */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', padding: '0 4px 4px 4px' }}>
+                {[
+                  { id: 'text', label: 'Fin (I-Beam)' },
+                  { id: 'thick', label: 'Épais (Thick)' },
+                  { id: 'block', label: 'Machine à écrire' },
+                  { id: 'default', label: 'Flèche' },
+                  { id: 'crosshair', label: 'Précision' },
+                  { id: 'pointer', label: 'Main' },
+                ].map((st) => {
+                  const isSel = cursorStyleChoice === st.id;
+                  return (
                     <button
-                      key={cs}
-                      onClick={() => setCursorStyleChoice(cs)}
+                      key={st.id}
+                      onClick={() => setCursorStyleChoice(st.id as any)}
                       style={{
-                        padding: '2px 7px',
+                        padding: '4px 6px',
                         fontSize: '0.68rem',
                         borderRadius: '6px',
                         cursor: 'pointer',
-                        border: cursorStyleChoice === cs ? '1px solid #3b82f6' : '1px solid var(--border-color)',
-                        background: cursorStyleChoice === cs ? 'var(--active-bg)' : 'var(--hover-bg)',
+                        border: isSel ? '1px solid #3b82f6' : '1px solid var(--border-color)',
+                        background: isSel ? 'var(--active-bg)' : 'var(--hover-bg)',
                         color: 'var(--text-color)',
-                        fontWeight: cursorStyleChoice === cs ? 700 : 500,
+                        fontWeight: isSel ? 700 : 500,
+                        textAlign: 'center',
                       }}
                     >
-                      {cs === 'text' ? 'I-Beam' : cs === 'default' ? 'Flèche' : 'Précision'}
+                      {st.label}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 8px 4px 8px', gap: '6px' }}>
+
+              {/* Options de couleur du curseur sur 2 lignes */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', padding: '0 4px 6px 4px' }}>
                 {CARET_COLORS.map((cc) => {
                   const isSel = caretColorChoice === cc.color;
                   return (
                     <div
                       key={cc.id}
                       onClick={() => setCaretColorChoice(cc.color)}
-                      title={`Curseur : ${cc.label}`}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: '4px',
-                        padding: '3px 7px',
-                        borderRadius: '12px',
+                        padding: '4px 6px',
+                        borderRadius: '8px',
                         cursor: 'pointer',
                         fontSize: '0.68rem',
                         fontWeight: isSel ? 700 : 500,
@@ -3615,17 +3636,20 @@ export default function App() {
                           borderRadius: '50%',
                           background: cc.color === 'auto' ? activeTheme.text : cc.color,
                           display: 'inline-block',
+                          flexShrink: 0,
                         }}
                       />
-                      <span>{cc.label}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cc.label}</span>
                     </div>
                   );
                 })}
               </div>
 
               <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
-              <div style={{ padding: '0 8px 6px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                Thèmes Google Chrome (20)
+              
+              {/* Titre Thèmes centré */}
+              <div style={{ textAlign: 'center', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-color)', marginBottom: '6px' }}>
+                Thèmes
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', width: '100%', boxSizing: 'border-box' }}>
