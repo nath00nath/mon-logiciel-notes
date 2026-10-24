@@ -360,8 +360,11 @@ const GLOBAL_CSS = `
 
   .sidebar-pane {
     background: var(--toolbar-bg) !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-bottom: none !important;
     border-right: 1px solid var(--border-color) !important;
-    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.06);
     color: var(--text-color);
   }
 
@@ -370,51 +373,54 @@ const GLOBAL_CSS = `
     height: 30px; min-width: 30px; padding: 0 8px; gap: 4px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 9px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--text-color);
-    background: var(--hover-bg);
-    border: 1px solid var(--border-color);
+    background: var(--btn-bg);
+    border: 1px solid var(--btn-border);
     white-space: nowrap; font-family: inherit;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    transform: translateY(0) scale(1);
-    transition: background 0.15s ease, border-color 0.15s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+    transition: transform 0.22s var(--spring), background 0.2s ease, box-shadow 0.22s ease, border-color 0.2s ease;
   }
   .tb-btn::after {
     content: ''; position: absolute; top: 0; left: -120%; width: 55%; height: 100%;
-    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.65), transparent);
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.8), transparent);
     transform: skewX(-20deg); transition: left 0.55s var(--ease); pointer-events: none;
   }
-  .tb-btn:hover { 
-    background: var(--active-bg); 
+  .tb-btn:hover:not(.on):not(:active) { 
+    background: var(--btn-hover-bg); 
+    transform: translateY(-1.5px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.09);
   }
   .tb-btn:active { 
-    transform: scale(0.93);
-    transition: transform 0.08s ease;
+    transform: translateY(0) scale(0.95);
+    transition: transform 0.06s ease;
   }
   .tb-btn:active::after { left: 140%; }
   .tb-btn.on {
     background: var(--active-bg);
-    border-color: var(--border-color);
+    border-color: var(--btn-border);
     color: var(--text-color);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+    transform: translateY(0);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
   }
   .tb-btn.on::after { left: 140%; }
+
   .tb-custom-trigger {
     height: 30px; padding: 0 9px; border-radius: 9px; flex-shrink: 0;
-    border: 1px solid var(--border-color); background: var(--hover-bg);
+    border: 1px solid var(--btn-border); background: var(--btn-bg);
     font-size: 0.8rem; font-weight: 600; color: var(--text-color); cursor: pointer;
     display: flex; align-items: center; justify-content: space-between; gap: 6px;
-    font-family: inherit; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    transition: background 0.2s ease, transform 0.2s var(--spring);
+    font-family: inherit; box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+    transition: background 0.2s ease, transform 0.22s var(--spring), box-shadow 0.22s ease;
   }
-  .tb-custom-trigger:hover { background: var(--active-bg); transform: translateY(-1px); }
-  .tb-custom-trigger:active { transform: scale(0.95); }
+  .tb-custom-trigger:hover:not(:active) { background: var(--btn-hover-bg); transform: translateY(-1.5px); box-shadow: 0 5px 12px rgba(0,0,0,0.09); }
+  .tb-custom-trigger:active { transform: translateY(0) scale(0.96); }
 
   .tb-sep { height: 18px; width: 1px; background: var(--border-color); flex-shrink: 0; }
 
   .size-box {
     display: flex; align-items: center; height: 30px; width: 84px; min-width: 84px; max-width: 84px;
     padding: 0 1px; flex-shrink: 0;
-    border: 1px solid var(--border-color); border-radius: 9px; background: var(--hover-bg);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--btn-border); border-radius: 9px; background: var(--btn-bg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.04);
   }
   .size-box button {
     border: none; background: transparent; cursor: pointer; width: 23px; height: 100%;
@@ -1138,9 +1144,25 @@ const computeSplit = (widths: number[], c: number, n: number) => {
 };
 
 export default function App() {
-  // --- 20 THÈMES GOOGLE CHROME + MODE SOMBRE ---
+  // --- PLEIN ÉCRAN + 20 THÈMES GOOGLE CHROME + MODE SOMBRE ---
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+
   const CHROME_THEMES = [
-    { id: 'chrome-classic', label: 'Classique', frame: '#ffffff', toolbar: '#ffffff', page: '#ffffff', tabActive: '#ffffff', popupBg: '#ffffff', text: '#111827', textMuted: '#6b7280', border: '#e5e7eb' },
+    { id: 'chrome-classic', label: 'Classique', frame: '#ffffff', toolbar: '#ffffff', page: '#ffffff', tabActive: '#ffffff', popupBg: '#ffffff', text: '#0f172a', textMuted: '#64748b', border: '#cbd5e1' },
     { id: 'bleu-ocean', label: 'Bleu Océan', frame: '#c2e7ff', toolbar: '#e8f0fe', page: '#f8fafd', tabActive: '#ffffff', popupBg: '#ffffff', text: '#041e49', textMuted: '#444746', border: '#b8cde4' },
     { id: 'menthe', label: 'Menthe Douce', frame: '#c4eed0', toolbar: '#e6f4ea', page: '#f6fbf7', tabActive: '#ffffff', popupBg: '#ffffff', text: '#072711', textMuted: '#3c4043', border: '#b4dec0' },
     { id: 'soleil', label: 'Soleil Doré', frame: '#feefc3', toolbar: '#fef7e0', page: '#fffdf5', tabActive: '#ffffff', popupBg: '#ffffff', text: '#3c2f00', textMuted: '#5f5332', border: '#ebd79b' },
@@ -3067,6 +3089,8 @@ export default function App() {
     transition: 'opacity 0.25s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
   };
 
+  const isDarkThemeActive = isDarkMode || ['bleu-ardoise', 'vert-foret', 'indigo-nuit', 'carbone-oled'].includes(activeTheme.id);
+
   return (
     <div style={{ 
       '--frame-bg': activeTheme.frame,
@@ -3077,8 +3101,11 @@ export default function App() {
       '--text-color': activeTheme.text,
       '--text-muted': activeTheme.textMuted,
       '--border-color': activeTheme.border,
-      '--hover-bg': isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-      '--active-bg': isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.10)',
+      '--btn-bg': isDarkThemeActive ? 'rgba(255,255,255,0.07)' : activeTheme.id === 'chrome-classic' ? '#ffffff' : 'rgba(255,255,255,0.75)',
+      '--btn-hover-bg': isDarkThemeActive ? 'rgba(255,255,255,0.14)' : '#ffffff',
+      '--btn-border': isDarkThemeActive ? 'rgba(255,255,255,0.16)' : activeTheme.id === 'chrome-classic' ? '#cbd5e1' : activeTheme.border,
+      '--hover-bg': isDarkThemeActive ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.04)',
+      '--active-bg': isDarkThemeActive ? 'rgba(255,255,255,0.16)' : 'rgba(15,23,42,0.09)',
       fontFamily: uiFontFamily,
       display: 'flex', 
       flexDirection: 'column', 
@@ -3466,7 +3493,11 @@ export default function App() {
           {activeTopMenu === 'view' && (
             <div style={{ padding: '8px', width: '380px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <div className="menu-item" onClick={() => { setIsSidebarOpen(!isSidebarOpen); setActiveTopMenu(null); }}>
-                {isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}
+                <span>{isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}</span>
+              </div>
+              <div className="menu-item" onClick={() => { toggleFullscreen(); setActiveTopMenu(null); }}>
+                <span>{isFullscreen ? 'Quitter le mode plein écran' : 'Passer en plein écran'}</span>
+                <span>F11</span>
               </div>
               
               <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
