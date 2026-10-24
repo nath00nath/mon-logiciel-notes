@@ -1170,19 +1170,7 @@ const computeSplit = (widths: number[], c: number, n: number) => {
 };
 
 export default function App() {
-  // --- CUSTOMISATION DU CURSEUR + PLEIN ÉCRAN + 20 THÈMES GOOGLE CHROME ---
-  const [caretColorChoice, setCaretColorChoice] = useState<string>('auto');
-  const [cursorStyleChoice, setCursorStyleChoice] = useState<'text' | 'default' | 'crosshair' | 'pointer'>('text');
-
-  const CARET_COLORS = [
-    { id: 'auto', label: 'Auto', color: 'auto' },
-    { id: 'blue', label: 'Bleu', color: '#2563eb' },
-    { id: 'violet', label: 'Violet', color: '#7c3aed' },
-    { id: 'rose', label: 'Rose', color: '#ec4899' },
-    { id: 'amber', label: 'Or', color: '#f59e0b' },
-    { id: 'emerald', label: 'Vert', color: '#10b981' },
-    { id: 'red', label: 'Rouge', color: '#ef4444' },
-  ];
+  // --- PLEIN ÉCRAN + 20 THÈMES GOOGLE CHROME ---
 
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
@@ -3129,7 +3117,6 @@ export default function App() {
   };
 
   const isDarkThemeActive = isDarkMode || ['bleu-ardoise', 'vert-foret', 'indigo-nuit', 'carbone-oled'].includes(activeTheme.id);
-  const resolvedCaretColor = caretColorChoice === 'auto' ? activeTheme.text : caretColorChoice;
 
   return (
     <div style={{ 
@@ -3141,8 +3128,6 @@ export default function App() {
       '--text-color': activeTheme.text,
       '--text-muted': activeTheme.textMuted,
       '--border-color': activeTheme.border,
-      '--caret-custom-color': resolvedCaretColor,
-      '--editor-cursor': cursorStyleChoice,
       '--brand-shimmer': isDarkThemeActive
         ? 'linear-gradient(115deg, #f1f5f9 0%, #f1f5f9 38%, #38bdf8 48%, #ffffff 52%, #f1f5f9 62%, #f1f5f9 100%)'
         : 'linear-gradient(115deg, #334155 0%, #334155 38%, #ffffff 48%, #93c5fd 52%, #334155 62%, #334155 100%)',
@@ -4780,7 +4765,7 @@ export default function App() {
                   zoom: (zoomPercent / 100) * 1.15,
                   lineHeight: lineHeight,
                   color: activeTheme.text,
-                  caretColor: resolvedCaretColor,
+                  caretColor: activeTheme.text,
                   textAlign: 'left',
                   direction: 'ltr',
                   fontFamily: "'IBM Plex Sans', sans-serif",
