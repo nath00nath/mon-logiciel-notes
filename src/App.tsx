@@ -857,18 +857,48 @@ const GLOBAL_CSS = `
   @keyframes noteIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes btnPop { 0% { transform: scale(0.85); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
-  /* Curseur dynamique (bloc) lié au thème et animation de frappe */
+  /* --- Curseur Bloc Personnalisé (Rétrocompatibilité) --- */
   .note-editor {
     animation: noteIn 0.4s var(--ease);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeSpeed;
     cursor: text !important;
-    caret-shape: block !important; /* Pour les navigateurs compatibles Chromium/WebKit */
-    caret-color: var(--text-color) !important; /* S'adapte dynamiquement à la couleur du thème */
     min-height: 100%;
     outline: none;
-    transition: caret-color 0.3s ease, color 0.3s ease;
+    transition: color 0.3s ease;
+    
+    /* 1. On cache le curseur système classique (la petite barre) */
+    caret-color: transparent !important; 
+  }
+
+  /* L'animation quand on écrit (léger sursaut/pulse de la zone de texte) */
+  @keyframes typePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.002); }
+    100% { transform: scale(1); }
+  }
+
+  .is-typing {
+    animation: typePulse 0.1s ease-out;
+  }
+
+  /* 2. On crée le faux curseur bloc avec un pseudo-élément qui clignote */
+  @keyframes blinkCursor {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* Ce span suivra la position de frappe */
+  .custom-caret {
+    display: inline-block;
+    width: 0.6em;
+    height: 1.1em;
+    background-color: var(--text-color);
+    vertical-align: text-bottom;
+    margin-bottom: -0.1em;
+    animation: blinkCursor 1s step-end infinite;
+    pointer-events: none;
   }
 
   /* L'animation quand on écrit (léger sursaut/pulse de la zone de texte) */
@@ -4815,7 +4845,6 @@ export default function App() {
                   zoom: (zoomPercent / 100) * 1.15,
                   lineHeight: lineHeight,
                   color: activeTheme.text,
-                  caretColor: activeTheme.text, /* Couleur dynamique du bloc selon le thème */
                   textAlign: 'left',
                   direction: 'ltr',
                   fontFamily: "'IBM Plex Sans', sans-serif",
