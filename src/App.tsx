@@ -1017,9 +1017,22 @@ const GLOBAL_CSS = `
     }
   }
 
-  .pixel-char {
-    display: inline-block;
-    animation: pixelateIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* --- Effet rétro / pixellisé fluide sur la frappe --- */
+  @keyframes retroTypeEffect {
+    0% {
+      filter: blur(3px) contrast(250%);
+      transform: translateY(2px) scale(0.98);
+      opacity: 0.4;
+    }
+    100% {
+      filter: blur(0px) contrast(100%);
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .note-editor p:focus, .note-editor div:focus {
+    animation: retroTypeEffect 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   }
 `;
 
@@ -4951,45 +4964,8 @@ export default function App() {
                   handleContentChange('typing');
                   triggerCaretTyping();
                   updateCustomCaret();
-
-                  // Effet de pixellisation sur la dernière lettre tapée
-                  const sel = window.getSelection();
-                  if (sel && sel.rangeCount > 0) {
-                    const range = sel.getRangeAt(0);
-                    if (range.startContainer.nodeType === Node.TEXT_NODE) {
-                      const textNode = range.startContainer as Text;
-                      const pos = range.startOffset;
-                      if (pos > 0 && !textNode.parentElement?.classList.contains('pixel-char')) {
-                        const fullText = textNode.textContent || '';
-                        const charToAnim = fullText[pos - 1];
-                        if (charToAnim && charToAnim.trim() !== '') {
-                          const before = fullText.substring(0, pos - 1);
-                          const after = fullText.substring(pos);
-                          
-                          const span = document.createElement('span');
-                          span.className = 'pixel-char';
-                          span.textContent = charToAnim;
-
-                          const parent = textNode.parentNode;
-                          if (parent) {
-                            textNode.textContent = before;
-                            const afterTextNode = document.createTextNode(after);
-                            parent.insertBefore(span, textNode.nextSibling);
-                            parent.insertBefore(afterTextNode, span.nextSibling);
-
-                            const newRange = document.createRange();
-                            newRange.setStart(afterTextNode, 0);
-                            newRange.collapse(true);
-                            sel.removeAllRanges();
-                            sel.addRange(newRange);
-                          }
-                        }
-                      }
-                    }
-                  }
                 }}
                 onKeyDown={(e) => {
-                  // Raccourcis clavier d'origine
                   if ((e.ctrlKey || e.metaKey) && !e.altKey) {
                     const k = e.key.toLowerCase();
                     if (k === 'z') { e.preventDefault(); stepHistory(e.shiftKey ? 1 : -1); }
