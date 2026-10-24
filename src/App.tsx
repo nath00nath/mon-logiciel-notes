@@ -857,27 +857,28 @@ const GLOBAL_CSS = `
   @keyframes noteIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes btnPop { 0% { transform: scale(0.85); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
-  /* Curseurs de texte personnalisés - Machine à écrire large (block) et effet wavy/smooth */
+  /* Curseur dynamique (bloc) lié au thème et animation de frappe */
   .note-editor {
     animation: noteIn 0.4s var(--ease);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeSpeed;
     cursor: text !important;
-    caret-color: var(--text-color) !important;
-    caret-shape: block !important;
+    caret-shape: block !important; /* Forme de bloc large */
     min-height: 100%;
-    transition: caret-color 0.3s ease;
+    outline: none;
+    transition: caret-color 0.2s ease, color 0.2s ease;
   }
 
-  /* Animation wavy subtile et fluide sur l'apparition des nouveaux caractères tapés */
-  @keyframes charWavy {
-    0% { transform: translateY(3px) scale(0.96); opacity: 0.4; }
-    60% { transform: translateY(-1px) scale(1.02); opacity: 1; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
+  /* L'animation quand on écrit (léger sursaut/pulse de la zone de texte) */
+  @keyframes typePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.002); } /* Effet très subtil */
+    100% { transform: scale(1); }
   }
-  .note-editor span.new-char, .note-editor *:not(:has(*)) {
-    animation: none;
+
+  .is-typing {
+    animation: typePulse 0.1s ease-out;
   }
 
   .note-editor:empty::before,
@@ -3524,7 +3525,7 @@ export default function App() {
           )}
 
           {activeTopMenu === 'view' && (
-            <div style={{ padding: '8px', width: '300px', boxSizing: 'border-box' }}>
+            <div style={{ padding: '10px', width: '520px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <div className="menu-item" onClick={() => { setIsSidebarOpen(!isSidebarOpen); setActiveTopMenu(null); }}>
                 <span>{isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}</span>
               </div>
@@ -3533,26 +3534,41 @@ export default function App() {
                 <span>F11</span>
               </div>
               
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 8px' }}>
-                <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>Mode sombre</span>
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Mode sombre</span>
                 <div 
                   className="menu-item" 
                   onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}
                   style={{ 
-                    width: 'fit-content', padding: '4px 12px', borderRadius: '20px',
+                    width: 'fit-content',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
                     border: isDarkMode ? '1px solid #3b82f6' : `1px solid var(--border-color)`, 
                     background: isDarkMode ? 'rgba(59,130,246,0.15)' : 'var(--hover-bg)' 
                   }}
                 >
-                  {isDarkMode ? 'Activé' : 'Désactivé'}
+                  {isDarkMode ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-color)', fontWeight: 600, fontSize: '0.88rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                      Activé
+                    </span>
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-color)', fontWeight: 600, fontSize: '0.88rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                      Désactivé
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
-              <div style={{ textAlign: 'center', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-color)', marginBottom: '6px' }}>Thèmes</div>
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-color)', marginBottom: '8px' }}>
+                Thèmes
+              </div>
+              
+              <div className="scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', width: '100%', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px', boxSizing: 'border-box' }}>
                 {CHROME_THEMES.map(t => {
                   const isSelected = theme === t.id && !isDarkMode;
                   return (
@@ -3560,21 +3576,49 @@ export default function App() {
                       key={t.id} 
                       onClick={() => { setTheme(t.id); setIsDarkMode(false); setActiveTopMenu(null); }}
                       style={{ 
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', 
-                        cursor: 'pointer', padding: '4px', borderRadius: '6px', boxSizing: 'border-box',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', 
+                        cursor: 'pointer', padding: '6px', borderRadius: '8px', boxSizing: 'border-box',
                         background: isSelected ? 'var(--active-bg)' : 'transparent',
-                        border: isSelected ? '1.5px solid #3b82f6' : '1.5px solid transparent',
-                        width: '100%'
+                        border: isSelected ? '2px solid #3b82f6' : '1px solid transparent',
+                        width: '100%', minWidth: 0
                       }}
                     >
                       <div style={{ 
-                        width: '100%', height: '36px', borderRadius: '5px', border: `1px solid ${t.border}`,
-                        display: 'flex', flexDirection: 'column', overflow: 'hidden', boxSizing: 'border-box'
+                        width: '100%', height: '58px', 
+                        borderRadius: '7px', border: `1px solid ${t.border}`,
+                        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.12)', boxSizing: 'border-box'
                       }}>
-                        <div style={{ height: '11px', backgroundColor: t.frame }} />
-                        <div style={{ flex: 1, backgroundColor: t.toolbar }} />
+                        {/* Barre du haut (En-tête / Onglet) */}
+                        <div style={{ height: '16px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 4px', gap: '3px' }}>
+                          <div style={{ width: '32px', height: '12px', backgroundColor: t.toolbar, borderRadius: '3px 3px 0 0', display: 'flex', alignItems: 'center', padding: '0 3px' }}>
+                            <div style={{ width: '12px', height: '2px', background: t.text, opacity: 0.6, borderRadius: '1px' }} />
+                          </div>
+                        </div>
+                        {/* Zone principale : Barre d'outils + Panneau latéral + Éditeur */}
+                        <div style={{ flex: 1, backgroundColor: t.toolbar, display: 'flex', flexDirection: 'column' }}>
+                          {/* Barre d'outils */}
+                          <div style={{ height: '8px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', padding: '0 4px', gap: '4px' }}>
+                            <div style={{ width: '10px', height: '3px', background: t.text, opacity: 0.5, borderRadius: '1px' }} />
+                            <div style={{ width: '14px', height: '3px', background: t.text, opacity: 0.5, borderRadius: '1px' }} />
+                            <div style={{ width: '8px', height: '3px', background: t.text, opacity: 0.5, borderRadius: '1px' }} />
+                          </div>
+                          {/* Contenu : Panneau latéral & Feuille */}
+                          <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                            <div style={{ width: '32px', borderRight: `1px solid ${t.border}`, padding: '4px 3px', display: 'flex', flexDirection: 'column', gap: '3px', backgroundColor: t.toolbar }}>
+                              <div style={{ width: '100%', height: '3px', background: t.text, opacity: 0.35, borderRadius: '1px' }} />
+                              <div style={{ width: '70%', height: '3px', background: t.text, opacity: 0.25, borderRadius: '1px' }} />
+                              <div style={{ width: '85%', height: '3px', background: t.text, opacity: 0.25, borderRadius: '1px' }} />
+                            </div>
+                            <div style={{ flex: 1, backgroundColor: t.page, padding: '4px 6px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                              <div style={{ width: '80%', height: '3.5px', background: t.text, opacity: 0.7, borderRadius: '1px' }} />
+                              <div style={{ width: '50%', height: '3px', background: t.text, opacity: 0.4, borderRadius: '1px' }} />
+                              <div style={{ width: '90%', height: '3px', background: t.text, opacity: 0.4, borderRadius: '1px' }} />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <span style={{ fontSize: '0.62rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: isSelected ? 700 : 600, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'block' }}>
                         {t.label}
                       </span>
                     </div>
@@ -4740,6 +4784,13 @@ export default function App() {
                 onMouseDown={handleEditorMouseDown}
                 onInput={() => handleContentChange('typing')}
                 onKeyDown={(e) => {
+                  // 1. Déclenchement de l'animation de frappe (pulse)
+                  const target = e.currentTarget;
+                  target.classList.remove('is-typing');
+                  void target.offsetWidth;
+                  target.classList.add('is-typing');
+
+                  // 2. Raccourcis clavier d'origine
                   if ((e.ctrlKey || e.metaKey) && !e.altKey) {
                     const k = e.key.toLowerCase();
                     if (k === 'z') { e.preventDefault(); stepHistory(e.shiftKey ? 1 : -1); }
