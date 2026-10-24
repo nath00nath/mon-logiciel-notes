@@ -67,12 +67,6 @@ const SYSTEM_FONTS = [
   'Comic Sans MS'
 ];
 
-const SPECIAL_CHARS = [
-  '©', '®', '™', '°', '±', '≠', '≈', '≤', '≥', '÷', '×', '∞', '√', '∑', 'π',
-  '←', '→', '↑', '↓', '↔', '⇒', '⇔', '✓', '✗', '★', '☆', '♥', '♦', '♣', '♠',
-  '«', '»', '“', '”', '‘', '’', '—', '–', '…', '§', '¶', '€', '\$', '£', '¥'
-];
-
 const BLOCK_STYLE_LABELS: Record<string, string> = {
   p: 'Normal',
   h1: 'Titre 1',
@@ -921,8 +915,6 @@ const TableIcon = () => (
 const HrIcon = () => (
   <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
     <line x1="2" y1="8" x2="14" y2="8" />
-    <line x1="3" y1="3.5" x2="9" y2="3.5" opacity="0.45" />
-    <line x1="3" y1="12.5" x2="11" y2="12.5" opacity="0.45" />
   </svg>
 );
 
@@ -1122,6 +1114,31 @@ const computeSplit = (widths: number[], c: number, n: number) => {
 };
 
 export default function App() {
+  // --- NOUVEAUX ÉTATS : THEMES ET MODE SOMBRE ---
+  const [theme, setTheme] = useState('blanc');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+
+  const THEMES = [
+    { id: 'blanc', label: 'Blanc pur', bg: '#ffffff' },
+    { id: 'gris', label: 'Gris neutre', bg: '#f8f9fa' },
+    { id: 'bleu', label: 'Bleu ciel', bg: '#f0f9ff' },
+    { id: 'indigo', label: 'Indigo doux', bg: '#eef2ff' },
+    { id: 'violet', label: 'Violet pastel', bg: '#faf5ff' },
+    { id: 'rose', label: 'Rose poudré', bg: '#fdf2f8' },
+    { id: 'rouge', label: 'Rouge pastel', bg: '#fef2f2' },
+    { id: 'orange', label: 'Orange pêche', bg: '#fff7ed' },
+    { id: 'jaune', label: 'Jaune aurore', bg: '#fefce8' },
+    { id: 'vert', label: 'Vert menthe', bg: '#f0fdf4' },
+    { id: 'cyan', label: 'Cyan lagon', bg: '#ecfeff' }
+  ];
+
+  const appBg = isDarkMode ? '#121212' : THEMES.find(t => t.id === theme)?.bg || '#ffffff';
+  const themeTextColor = isDarkMode ? '#e5e7eb' : '#1f2937';
+  const [textColor, setTextColor] = useState('#0f172a');
+  const borderColor = isDarkMode ? '#374151' : '#e5e7eb';
+  const menuBg = isDarkMode ? '#1f2937' : '#ffffff';
+  // ----------------------------------------------
   const [saved] = useState<SavedState>(loadSavedState);
   const [folders, setFolders] = useState<Folder[]>(saved.folders);
   const [currentView, setCurrentView] = useState<'editor' | 'account'>('editor');
@@ -1436,7 +1453,6 @@ export default function App() {
   const [currentStyle, setCurrentStyle] = useState<string>('p');
 
   const [picker, setPicker] = useState<PickerState>(null);
-  const [textColor, setTextColor] = useState('#0f172a');
   const [highlightColor, setHighlightColor] = useState('transparent');
   const [cellColorTarget, setCellColorTarget] = useState<HTMLTableCellElement | null>(null);
   const [customColor, setCustomColor] = useState('#475569');
@@ -2325,13 +2341,6 @@ export default function App() {
     setActiveTopMenu(null);
   };
 
-  const insertSpecialChar = (char: string) => {
-    restoreSelection();
-    document.execCommand('insertText', false, char);
-    handleContentChange();
-    setShowSpecialChars(false);
-  };
-
   const handleEditorContextMenu = (e: ReactMouseEvent) => {
     let target = e.target as HTMLElement | null;
     let cell: HTMLTableCellElement | null = null;
@@ -3010,10 +3019,17 @@ export default function App() {
   };
 
   return (
-    <div className="app-bg" style={{ fontFamily: uiFontFamily }}>
-      <div className="blob b1" />
-      <div className="blob b2" />
-      <div className="blob b3" />
+    <div style={{ 
+      fontFamily: uiFontFamily,
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100vh', 
+      width: '100vw', 
+      overflow: 'hidden',
+      backgroundColor: appBg,
+      color: themeTextColor,
+      transition: 'background-color 0.3s ease, color 0.3s ease'
+    }}>
 
       <input
         id="hidden-font-input"
@@ -3393,6 +3409,35 @@ export default function App() {
               <div className="menu-item" onClick={() => { setIsSidebarOpen(!isSidebarOpen); setActiveTopMenu(null); }}>
                 {isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}
               </div>
+              <div style={{ height: '1px', background: borderColor, margin: '4px 0' }} />
+              
+              <div className="menu-item" onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}>
+                {isDarkMode ? 'Désactiver le mode sombre' : 'Activer le mode sombre'}
+              </div>
+              
+              <div style={{ height: '1px', background: borderColor, margin: '4px 0' }} />
+              <div style={{ padding: '4px 12px', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
+                Thème de l'application
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', padding: '0 4px' }}>
+                {THEMES.map(t => (
+                  <div 
+                    key={t.id} 
+                    className={`menu-item ${theme === t.id && !isDarkMode ? 'active' : ''}`}
+                    onClick={() => { setTheme(t.id); setIsDarkMode(false); setActiveTopMenu(null); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', padding: '6px' }}
+                  >
+                    <span style={{ 
+                      width: '12px', 
+                      height: '12px', 
+                      backgroundColor: t.bg, 
+                      border: `1px solid ${borderColor}`, 
+                      borderRadius: '2px' 
+                    }}></span>
+                    {t.label}
+                  </div>
+                ))}
+              </div>
             </>
           )}
 
@@ -3481,29 +3526,35 @@ export default function App() {
 
       {activeTopMenu === 'insert' && showTablePicker && (
         <div
-          className="glass menu table-picker-pop"
           style={{
+            position: 'absolute',
             left: tablePickerPos.x,
             top: tablePickerPos.y,
             padding: '12px',
-            minWidth: 'auto',
-            boxShadow: '0 18px 40px rgba(15,23,42,0.2)',
+            backgroundColor: menuBg,
+            border: `1px solid ${borderColor}`,
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
             zIndex: 900,
+            borderRadius: '4px'
           }}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
           onMouseLeave={() => setTableHover({ rows: 0, cols: 0 })}
         >
-          <div className="tp-label">
+          <div style={{ fontSize: '0.82rem', fontWeight: 600, color: textColor, marginBottom: '8px', textAlign: 'center', minHeight: '1.3em' }}>
             {tableHover.rows > 0 ? (
-              <>
-                <b>{tableHover.cols}</b> × <b>{tableHover.rows}</b>
-              </>
+              <>{tableHover.cols} × {tableHover.rows}</>
             ) : (
-              'Choisir la taille'
+              'Insérer un tableau'
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${TABLE_PICKER_COLS}, 19px)`, gap: '2px' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: `repeat(${TABLE_PICKER_COLS}, 20px)`, 
+            gap: '0px',
+            borderTop: `1px solid ${borderColor}`,
+            borderLeft: `1px solid ${borderColor}`
+          }}>
             {Array.from({ length: TABLE_PICKER_ROWS * TABLE_PICKER_COLS }).map((_, i) => {
               const r = Math.floor(i / TABLE_PICKER_COLS);
               const c = i % TABLE_PICKER_COLS;
@@ -3511,16 +3562,21 @@ export default function App() {
               return (
                 <div
                   key={i}
-                  className={`tp-cell${isOn ? ' on' : ''}`}
                   onMouseEnter={() => setTableHover({ rows: r + 1, cols: c + 1 })}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     insertTable(r + 1, c + 1);
                   }}
-                >
-                  <i />
-                </div>
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRight: `1px solid ${borderColor}`,
+                    borderBottom: `1px solid ${borderColor}`,
+                    backgroundColor: isOn ? (isDarkMode ? '#3b82f6' : '#2563eb') : 'transparent',
+                    cursor: 'pointer'
+                  }}
+                />
               );
             })}
           </div>
@@ -3528,48 +3584,66 @@ export default function App() {
       )}
 
       {showSpecialChars && (
-        <div className="overlay" onClick={() => setShowSpecialChars(false)}>
-          <div className="glass modal" style={{ width: '400px' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', textAlign: 'center', fontWeight: 600 }}>
-              Caractères spéciaux
-            </h3>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(9, 1fr)',
-                gap: '6px',
-                maxHeight: '260px',
-                overflowY: 'auto',
-                padding: '4px',
-              }}
-            >
-              {SPECIAL_CHARS.map((char) => (
+        <div style={{
+          position: 'fixed', inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', justifyContent: 'center', alignItems: 'center'
+        }} onClick={() => setShowSpecialChars(false)}>
+          <div style={{
+            backgroundColor: menuBg,
+            color: textColor,
+            padding: '24px',
+            borderRadius: '4px',
+            border: `1px solid ${borderColor}`,
+            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+            maxWidth: '600px',
+            width: '90%',
+            display: 'flex',
+            flexDirection: 'column'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Insérer un caractère spécial</h3>
+              <button onClick={() => setShowSpecialChars(false)} style={{ background: 'none', border: 'none', color: textColor, cursor: 'pointer', fontSize: '20px' }}>✕</button>
+            </div>
+            
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))',
+              gap: '1px',
+              backgroundColor: borderColor,
+              border: `1px solid ${borderColor}`,
+              maxHeight: '350px',
+              overflowY: 'auto'
+            }}>
+              {[
+                '€', '£', '¥', '¢', '©', '®', '™', '±', '≠', '≤', '≥', '÷', '×', '∞', 'µ', 'α', 'β', 'π', 'Ω', '∑', '•', '…', 
+                '★', '☆', '✓', '✗', '♠', '♣', '♥', '♦', '♪', '♫', 'ç', 'æ', 'œ', '¿', '¡', '«', '»', '§', '¶', '†', '‡', '°', '‰',
+                '←', '↑', '→', '↓', '↔', '↕', '⇐', '⇑', '⇒', '⇓', '⇔', '⇕', '✓', '✔', '✕', '✖', '✗', '✘', '⊕', '⊖', '⊗', '⊘',
+                '¼', '½', '¾', '⅓', '⅔', '⅛', '⅜', '⅝', '⅞', 'ⁿ', '₁', '₂', '₃', '₄', '←', '↑', '→', '↓'
+              ].map((char, index) => (
                 <button
-                  key={char}
-                  onClick={() => insertSpecialChar(char)}
-                  style={{
-                    height: '34px',
-                    fontSize: '1.1rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(15,23,42,0.15)',
-                    background: 'rgba(255,255,255,0.7)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.15s ease',
+                  key={`${char}-${index}`}
+                  onClick={() => {
+                    editorRef.current?.focus();
+                    document.execCommand('insertText', false, char);
+                    handleContentChange();
+                    setShowSpecialChars(false);
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#ffffff')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.7)')}
+                  style={{
+                    backgroundColor: menuBg,
+                    color: textColor,
+                    border: 'none',
+                    padding: '12px 0',
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f3f4f6'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = menuBg}
                 >
                   {char}
                 </button>
               ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <button className="m-btn" onClick={() => setShowSpecialChars(false)}>
-                Fermer
-              </button>
             </div>
           </div>
         </div>
