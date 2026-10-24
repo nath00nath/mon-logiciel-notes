@@ -1017,20 +1017,24 @@ const GLOBAL_CSS = `
     }
   }
 
-  /* --- Effet rétro / pixellisé fluide sur la frappe (Corrigé) --- */
+  /* --- Effet rétro / CRT fluide sur la frappe (Sans saut) --- */
   @keyframes retroTypeEffect {
     0% {
-      filter: blur(0.5px) contrast(120%);
-      opacity: 0.85;
+      filter: contrast(150%) brightness(1.1);
+      text-shadow: 2px 0 0 rgba(255, 0, 0, 0.4), -2px 0 0 rgba(0, 255, 255, 0.4);
+    }
+    50% {
+      filter: contrast(110%) brightness(1);
+      text-shadow: 1px 0 0 rgba(255, 0, 0, 0.2), -1px 0 0 rgba(0, 255, 255, 0.2);
     }
     100% {
-      filter: blur(0px) contrast(100%);
-      opacity: 1;
+      filter: contrast(100%) brightness(1);
+      text-shadow: none;
     }
   }
 
   .note-editor.is-typing-effect {
-    animation: retroTypeEffect 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: retroTypeEffect 0.12s ease-out;
   }
 `;
 
@@ -4950,7 +4954,7 @@ export default function App() {
               <div
                 key={activeTab ? `${activeNote?.id}-${activeTab.id}` : 'none'}
                 ref={editorRef}
-                className="note-editor"
+                className={`note-editor ${isTypingCaret ? 'is-typing-effect' : ''}`}
                 contentEditable={!!activeTab}
                 suppressContentEditableWarning
                 onContextMenu={handleEditorContextMenu}
