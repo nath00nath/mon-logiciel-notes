@@ -273,23 +273,16 @@ const GLOBAL_CSS = `
 
   .glass {
     position: relative;
-    background: linear-gradient(135deg, rgba(255,255,255,0.64), rgba(255,255,255,0.32));
-    backdrop-filter: blur(28px) saturate(190%);
-    -webkit-backdrop-filter: blur(28px) saturate(190%);
-    box-shadow: 0 10px 40px rgba(30, 41, 90, 0.08);
+    background: var(--menu-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
   }
-  .glass::before {
-    content: ''; position: absolute; inset: 0; border-radius: inherit;
-    pointer-events: none; z-index: 0;
-    background: linear-gradient(115deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.12) 32%, transparent 55%);
-  }
+  .glass::before { display: none; }
   .glass > * { position: relative; z-index: 1; }
 
   .glass.menu, .glass.modal, .glass.picker {
-    background: #ffffff;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: var(--menu-bg);
+    border: 1px solid var(--border-color);
   }
   .glass.menu::before, .glass.modal::before, .glass.picker::before { display: none; }
   .glass.menu .menu-item:hover { background: #f1f5f9; }
@@ -1859,12 +1852,9 @@ export default function App() {
     const editor = editorRef.current;
     if (!editor || !activeNote || !activeFolder || !activeTab) return;
 
-    const rawText = editor.innerText.replace(/[\n\u200B]/g, '').trim();
     // On ne vide l'éditeur que si l'utilisateur efface du texte au clavier ('typing'),
     // jamais quand il clique sur un bouton de formatage ('command') !
-    if (source === 'typing' && !rawText && !editor.querySelector('table') && !editor.querySelector('hr')) {
-      editor.innerHTML = '';
-    }
+
 
     const newContent = editor.innerHTML;
     const folderId = activeFolder.id;
@@ -3020,16 +3010,22 @@ export default function App() {
 
   return (
     <div style={{ 
+      '--app-bg': appBg,
+      '--menu-bg': menuBg,
+      '--text-color': themeTextColor,
+      '--border-color': borderColor,
+      '--hover-bg': isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)',
+      '--active-bg': isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.08)',
       fontFamily: uiFontFamily,
       display: 'flex', 
       flexDirection: 'column', 
       height: '100vh', 
       width: '100vw', 
       overflow: 'hidden',
-      backgroundColor: appBg,
-      color: themeTextColor,
-      transition: 'background-color 0.3s ease, color 0.3s ease'
-    }}>
+      backgroundColor: 'var(--app-bg)',
+      color: 'var(--text-color)',
+      transition: 'background-color 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.4s ease'
+    } as React.CSSProperties}>
 
       <input
         id="hidden-font-input"
@@ -3418,9 +3414,19 @@ export default function App() {
               <div 
                 className="menu-item" 
                 onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}
-                style={{ margin: '0 4px 8px 4px', border: isDarkMode ? '1px solid #3b82f6' : `1px solid ${borderColor}`, background: isDarkMode ? 'rgba(59,130,246,0.1)' : 'transparent' }}
+                style={{ margin: '0 4px 8px 4px', border: isDarkMode ? '1px solid #3b82f6' : `1px solid var(--border-color)`, background: isDarkMode ? 'rgba(59,130,246,0.1)' : 'transparent' }}
               >
-                {isDarkMode ? '🌙 Activé' : '☀️ Désactivé'}
+                {isDarkMode ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    Activé
+                  </span>
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    Désactivé
+                  </span>
+                )}
               </div>
 
               <div style={{ height: '1px', background: borderColor, margin: '8px 0' }} />
