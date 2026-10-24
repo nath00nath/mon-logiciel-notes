@@ -873,19 +873,52 @@ const GLOBAL_CSS = `
 
   .custom-wide-caret {
     position: fixed;
-    width: 8px; /* <-- Règle la largeur ici : 3.5px (barre épaisse) ou 8px (bloc wide) */
-    background-color: var(--text-color);
-    opacity: 0.75;
+    top: 0;
+    left: 0;
+    width: 8px;
+    background-color: var(--caret-theme-color, var(--text-color));
+    box-shadow: 0 0 12px var(--caret-theme-glow, transparent);
     pointer-events: none;
     z-index: 500;
-    border-radius: 1.5px;
-    animation: wideCaretBlink 1s step-end infinite;
-    transition: top 0.04s linear, left 0.04s linear, height 0.08s ease;
+    border-radius: 2.5px;
+    will-change: transform, height, background-color;
+    /* Glissement ultra-fluide avec léger ressort (style Smooth Caret) */
+    transition:
+      transform 0.085s cubic-bezier(0.22, 1, 0.36, 1),
+      height 0.12s cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 0.35s ease,
+      box-shadow 0.35s ease;
+    animation: wideCaretBlink 1.1s ease-in-out infinite;
+  }
+
+  /* Quand on écrit : le curseur reste bien opaque (ne clignote pas) */
+  .custom-wide-caret.typing {
+    animation: none;
+    opacity: 0.88;
+  }
+
+  .custom-wide-caret-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: inherit;
+    transform-origin: center center;
+  }
+
+  /* Rebond élastique satisfaisant à chaque lettre tapée */
+  .custom-wide-caret.typing .custom-wide-caret-inner {
+    animation: caretKeyPop 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes caretKeyPop {
+    0%   { transform: scaleX(1) scaleY(1); }
+    40%  { transform: scaleX(1.32) scaleY(0.86); }
+    100% { transform: scaleX(1) scaleY(1); }
   }
 
   @keyframes wideCaretBlink {
-    0%, 100% { opacity: 0.75; }
-    50% { opacity: 0; }
+    0%, 100% { opacity: 0.85; }
+    50% { opacity: 0.12; }
   }
 
   .is-typing {
@@ -1584,6 +1617,18 @@ export default function App() {
     height: 20,
     visible: false,
   });
+  const [isTypingCaret, setIsTypingCaret] = useState(false);
+  const [typingKey, setTypingKey] = useState(0);
+  const typingTimeoutRef = useRef<number | null>(null);
+
+  const triggerCaretTyping = useCallback(() => {
+    setIsTypingCaret(true);
+    setTypingKey((k) => k + 1);
+    if (typingTimeoutRef.current) window.clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = window.setTimeout(() => {
+      setIsTypingCaret(false);
+    }, 450);
+  }, []);
 
   const updateCustomCaret = useCallback(() => {
     const ed = editorRef.current;
@@ -3185,11 +3230,39 @@ export default function App() {
     transition: 'opacity 0.25s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
   };
 
-  const isDarkThemeActive = isDarkMode || ['bleu-ardoise', 'vert-foret', 'indigo-nuit', 'carbone-oled'].includes(activeTheme.id);
+ const isDarkThemeActive = isDarkMode || ['bleu-ardoise', 'vert-foret', 'indigo-nuit', 'carbone-oled'].includes(activeTheme.id);
 
+  const CARET_THEME_COLORS: Record<string, string> = {
+    'chrome-classic': '#2563eb',
+    'bleu-ocean': '#0284c7',
+    'menthe': '#10b981',
+    'soleil': '#f59e0b',
+    'pivoine': '#e11d48',
+    'lavande': '#9333ea',
+    'peche': '#ea580c',
+    'cyan-lagon': '#06b6d4',
+    'matcha': '#65a30d',
+    'framboise': '#db2777',
+    'ambre-automne': '#d97706',
+    'sauge-nordique': '#475569',
+    'bleu-canard': '#0d9488',
+    'mauve-crepuscule': '#7c3aed',
+    'aurore-boreale': '#059669',
+    'fraise-creme': '#f43f5e',
+    'bleu-ardoise': '#38bdf8',
+    'vert-foret': '#34d399',
+    'indigo-nuit': '#818cf8',
+    'carbone-oled': '#f59e0b',
+    'dark': '#60a5fa',
+  };
+
+  const activeCaretColor = CARET_THEME_COLORS[activeTheme.id] || activeTheme.text;
+  
   return (
     <div style={{ 
       '--frame-bg': activeTheme.frame,
+      '--caret-theme-color': activeCaretColor,
+      '--caret-theme-glow': `${activeCaretColor}55`,
       '--toolbar-bg': activeTheme.toolbar,
       '--tab-active-bg': activeTheme.tabActive,
       '--page-bg': activeTheme.page,
@@ -4852,6 +4925,7 @@ export default function App() {
                 onBlur={() => setCustomCaret((prev) => ({ ...prev, visible: false }))}
                 onInput={() => {
                   handleContentChange('typing');
+                  triggerCaretTyping();
                   updateCustomCaret();
                 }}
                 onKeyDown={(e) => {
@@ -4888,13 +4962,14 @@ export default function App() {
               />
               {customCaret.visible && (
                 <div
-                  className="custom-wide-caret"
+                  className={`custom-wide-caret${isTypingCaret ? ' typing' : ''}`}
                   style={{
-                    top: `${customCaret.top}px`,
-                    left: `${customCaret.left}px`,
+                    transform: `translate3d(${customCaret.left}px, ${customCaret.top}px, 0)`,
                     height: `${customCaret.height}px`,
                   }}
-                />
+                >
+                  <div key={typingKey} className="custom-wide-caret-inner" />
+                </div>
               )}
             </div>
           </div>
