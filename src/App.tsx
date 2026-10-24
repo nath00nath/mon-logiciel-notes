@@ -857,7 +857,7 @@ const GLOBAL_CSS = `
   @keyframes noteIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes btnPop { 0% { transform: scale(0.85); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
-  /* --- Curseur Standard & Fluide --- */
+  /* --- Curseur Large & Fluide --- */
   .note-editor {
     animation: noteIn 0.4s var(--ease);
     -webkit-font-smoothing: antialiased;
@@ -865,6 +865,7 @@ const GLOBAL_CSS = `
     text-rendering: optimizeSpeed;
     cursor: text !important;
     caret-color: var(--text-color) !important; /* Le curseur prend la couleur du thème */
+    caret-width: 4px !important; /* Définit l'épaisseur du curseur (wide) */
     min-height: 100%;
     outline: none;
     transition: caret-color 0.3s ease, color 0.3s ease;
