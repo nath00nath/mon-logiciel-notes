@@ -997,6 +997,30 @@ const GLOBAL_CSS = `
   .scroll::-webkit-scrollbar { width: 6px; height: 6px; }
   .scroll::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.35); border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
   .scroll::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.6); background-clip: content-box; }
+
+  /* --- Effet de pixellisation / apparition rétro à la frappe --- */
+  @keyframes pixelateIn {
+    0% {
+      filter: blur(4px) contrast(350%);
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    60% {
+      filter: blur(1.5px) contrast(200%);
+      opacity: 0.8;
+      transform: scale(1.08);
+    }
+    100% {
+      filter: blur(0px) contrast(100%);
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .pixel-char {
+    display: inline-block;
+    animation: pixelateIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 `;
 
 const PlusIcon = () => (
@@ -3233,7 +3257,7 @@ export default function App() {
  const isDarkThemeActive = isDarkMode || ['bleu-ardoise', 'vert-foret', 'indigo-nuit', 'carbone-oled'].includes(activeTheme.id);
 
   const CARET_THEME_COLORS: Record<string, string> = {
-    'chrome-classic': '#2563eb',
+    'chrome-classic': '#0f172a',
     'bleu-ocean': '#0284c7',
     'menthe': '#10b981',
     'soleil': '#f59e0b',
@@ -4927,6 +4951,42 @@ export default function App() {
                   handleContentChange('typing');
                   triggerCaretTyping();
                   updateCustomCaret();
+
+                  // Effet de pixellisation sur la dernière lettre tapée
+                  const sel = window.getSelection();
+                  if (sel && sel.rangeCount > 0) {
+                    const range = sel.getRangeAt(0);
+                    if (range.startContainer.nodeType === Node.TEXT_NODE) {
+                      const textNode = range.startContainer as Text;
+                      const pos = range.startOffset;
+                      if (pos > 0 && !textNode.parentElement?.classList.contains('pixel-char')) {
+                        const fullText = textNode.textContent || '';
+                        const charToAnim = fullText[pos - 1];
+                        if (charToAnim && charToAnim.trim() !== '') {
+                          const before = fullText.substring(0, pos - 1);
+                          const after = fullText.substring(pos);
+                          
+                          const span = document.createElement('span');
+                          span.className = 'pixel-char';
+                          span.textContent = charToAnim;
+
+                          const parent = textNode.parentNode;
+                          if (parent) {
+                            textNode.textContent = before;
+                            const afterTextNode = document.createTextNode(after);
+                            parent.insertBefore(span, textNode.nextSibling);
+                            parent.insertBefore(afterTextNode, span.nextSibling);
+
+                            const newRange = document.createRange();
+                            newRange.setStart(afterTextNode, 0);
+                            newRange.collapse(true);
+                            sel.removeAllRanges();
+                            sel.addRange(newRange);
+                          }
+                        }
+                      }
+                    }
+                  }
                 }}
                 onKeyDown={(e) => {
                   // Raccourcis clavier d'origine
