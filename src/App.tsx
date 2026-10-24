@@ -4154,7 +4154,7 @@ export default function App() {
             className="toggle-tab"
             style={{ 
               left: isSidebarOpen ? '281px' : '1px',
-              transition: 'left 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+              transition: 'left 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             title={isSidebarOpen ? 'Replier le panneau' : 'Déplier le panneau'}
@@ -4166,7 +4166,8 @@ export default function App() {
             style={{
               flex: 1,
               minWidth: 0,
-              margin: 0,
+              marginLeft: isSidebarOpen ? '280px' : '0px',
+              transition: 'margin-left 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
               height: 'calc(100vh - 34px)',
               display: 'flex',
               flexDirection: 'column',
