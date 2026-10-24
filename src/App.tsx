@@ -344,6 +344,7 @@ const GLOBAL_CSS = `
     display: flex; align-items: center; gap: 4px; padding: 0 16px;
     background: var(--frame-bg);
     border-bottom: 1px solid var(--border-color);
+    box-sizing: border-box;
     color: var(--text-color);
     z-index: 600;
   }
@@ -1139,7 +1140,7 @@ const computeSplit = (widths: number[], c: number, n: number) => {
 export default function App() {
   // --- 20 THÈMES GOOGLE CHROME + MODE SOMBRE ---
   const CHROME_THEMES = [
-    { id: 'chrome-classic', label: 'Classique', frame: '#dee1e6', toolbar: '#ffffff', page: '#ffffff', tabActive: '#ffffff', popupBg: '#ffffff', text: '#202124', textMuted: '#5f6368', border: '#dadce0' },
+    { id: 'chrome-classic', label: 'Classique', frame: '#ffffff', toolbar: '#ffffff', page: '#ffffff', tabActive: '#ffffff', popupBg: '#ffffff', text: '#111827', textMuted: '#6b7280', border: '#e5e7eb' },
     { id: 'bleu-ocean', label: 'Bleu Océan', frame: '#c2e7ff', toolbar: '#e8f0fe', page: '#f8fafd', tabActive: '#ffffff', popupBg: '#ffffff', text: '#041e49', textMuted: '#444746', border: '#b8cde4' },
     { id: 'menthe', label: 'Menthe Douce', frame: '#c4eed0', toolbar: '#e6f4ea', page: '#f6fbf7', tabActive: '#ffffff', popupBg: '#ffffff', text: '#072711', textMuted: '#3c4043', border: '#b4dec0' },
     { id: 'soleil', label: 'Soleil Doré', frame: '#feefc3', toolbar: '#fef7e0', page: '#fffdf5', tabActive: '#ffffff', popupBg: '#ffffff', text: '#3c2f00', textMuted: '#5f5332', border: '#ebd79b' },
@@ -3044,13 +3045,14 @@ export default function App() {
     overflow: 'hidden',
     padding: '16px',
     borderRight: `1px solid ${borderColor}`,
+    boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
     background: menuBg,
     willChange: 'transform',
     transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
     transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s',
-    boxShadow: isSidebarOpen ? '8px 0 30px rgba(15, 23, 42, 0.08)' : 'none',
+    boxShadow: isSidebarOpen ? '4px 0 20px rgba(0, 0, 0, 0.05)' : 'none',
   };
 
   const sidebarInnerStyle: CSSProperties = {
@@ -3462,40 +3464,48 @@ export default function App() {
           )}
 
           {activeTopMenu === 'view' && (
-            <div style={{ padding: '6px', width: '420px', maxWidth: '420px', boxSizing: 'border-box' }}>
+            <div style={{ padding: '8px', width: '380px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <div className="menu-item" onClick={() => { setIsSidebarOpen(!isSidebarOpen); setActiveTopMenu(null); }}>
                 {isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}
               </div>
               
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
-              <div style={{ padding: '0 8px 4px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
+              <div style={{ textAlign: 'center', padding: '0 8px 6px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                 Mode sombre
               </div>
               
-              <div 
-                className="menu-item" 
-                onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}
-                style={{ margin: '0 4px 6px 4px', border: isDarkMode ? '1px solid #3b82f6' : `1px solid var(--border-color)`, background: isDarkMode ? 'rgba(59,130,246,0.15)' : 'transparent' }}
-              >
-                {isDarkMode ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)' }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                    Activé
-                  </span>
-                ) : (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)' }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                    Désactivé
-                  </span>
-                )}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                <div 
+                  className="menu-item" 
+                  onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}
+                  style={{ 
+                    width: 'fit-content',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: isDarkMode ? '1px solid #3b82f6' : `1px solid var(--border-color)`, 
+                    background: isDarkMode ? 'rgba(59,130,246,0.15)' : 'var(--hover-bg)' 
+                  }}
+                >
+                  {isDarkMode ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontWeight: 600 }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                      Activé
+                    </span>
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontWeight: 600 }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                      Désactivé
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
-              <div style={{ padding: '0 8px 4px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+              <div style={{ padding: '0 8px 6px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                 Thèmes Google Chrome (20)
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', padding: '2px 4px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', width: '100%', boxSizing: 'border-box' }}>
                 {CHROME_THEMES.map(t => {
                   const isSelected = theme === t.id && !isDarkMode;
                   return (
@@ -3504,16 +3514,17 @@ export default function App() {
                       onClick={() => { setTheme(t.id); setIsDarkMode(false); setActiveTopMenu(null); }}
                       style={{ 
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', 
-                        cursor: 'pointer', padding: '4px 2px', borderRadius: '6px',
+                        cursor: 'pointer', padding: '4px', borderRadius: '6px', boxSizing: 'border-box',
                         background: isSelected ? 'var(--active-bg)' : 'transparent',
-                        border: isSelected ? '1.5px solid #3b82f6' : '1.5px solid transparent'
+                        border: isSelected ? '1.5px solid #3b82f6' : '1.5px solid transparent',
+                        width: '100%', minWidth: 0
                       }}
                     >
                       <div style={{ 
                         width: '100%', height: '36px', 
                         borderRadius: '5px', border: `1px solid ${t.border}`,
                         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)', boxSizing: 'border-box'
                       }}>
                         <div style={{ height: '11px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 2px', gap: '2px' }}>
                           <div style={{ width: '16px', height: '8px', backgroundColor: t.toolbar, borderRadius: '2px 2px 0 0' }} />
@@ -3529,7 +3540,7 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                      <span style={{ fontSize: '0.62rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+                      <span style={{ fontSize: '0.62rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'block' }}>
                         {t.label}
                       </span>
                     </div>
