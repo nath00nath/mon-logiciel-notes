@@ -998,31 +998,6 @@ const GLOBAL_CSS = `
   .scroll::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.35); border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
   .scroll::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.6); background-clip: content-box; }
 
-  /* --- Effet d'impulsion visuelle fluide au niveau du curseur --- */
-  .custom-wide-caret.typing .custom-wide-caret-inner::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: var(--caret-theme-color, #0f172a);
-    border-radius: inherit;
-    z-index: -1;
-    animation: typingPulseEffect 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    pointer-events: none;
-  }
-
-  @keyframes typingPulseEffect {
-    0% {
-      transform: scale(1);
-      opacity: 0.7;
-      filter: blur(0px);
-    }
-    100% {
-      transform: scaleX(4.5) scaleY(1.8);
-      opacity: 0;
-      filter: blur(3px);
-    }
-  }
-
   /* --- Effet rétro / CRT fluide sur la frappe (Sans saut) --- */
   @keyframes retroTypeEffect {
     0% {
