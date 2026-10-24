@@ -857,48 +857,18 @@ const GLOBAL_CSS = `
   @keyframes noteIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes btnPop { 0% { transform: scale(0.85); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
-  /* --- Curseur Bloc Personnalisé (Rétrocompatibilité) --- */
+  /* --- Curseur Dynamique --- */
   .note-editor {
     animation: noteIn 0.4s var(--ease);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeSpeed;
     cursor: text !important;
+    caret-color: var(--text-color) !important; /* Couleur dynamique */
+    caret-shape: block; /* Bloc sur les navigateurs qui le supportent */
     min-height: 100%;
     outline: none;
-    transition: color 0.3s ease;
-    
-    /* 1. On cache le curseur système classique (la petite barre) */
-    caret-color: transparent !important; 
-  }
-
-  /* L'animation quand on écrit (léger sursaut/pulse de la zone de texte) */
-  @keyframes typePulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.002); }
-    100% { transform: scale(1); }
-  }
-
-  .is-typing {
-    animation: typePulse 0.1s ease-out;
-  }
-
-  /* 2. On crée le faux curseur bloc avec un pseudo-élément qui clignote */
-  @keyframes blinkCursor {
-    0%, 49% { opacity: 1; }
-    50%, 100% { opacity: 0; }
-  }
-
-  /* Ce span suivra la position de frappe */
-  .custom-caret {
-    display: inline-block;
-    width: 0.6em;
-    height: 1.1em;
-    background-color: var(--text-color);
-    vertical-align: text-bottom;
-    margin-bottom: -0.1em;
-    animation: blinkCursor 1s step-end infinite;
-    pointer-events: none;
+    transition: caret-color 0.3s ease, color 0.3s ease;
   }
 
   /* L'animation quand on écrit (léger sursaut/pulse de la zone de texte) */
@@ -4813,13 +4783,7 @@ export default function App() {
                 onMouseDown={handleEditorMouseDown}
                 onInput={() => handleContentChange('typing')}
                 onKeyDown={(e) => {
-                  // 1. Déclenchement de l'animation de frappe (pulse)
-                  const target = e.currentTarget;
-                  target.classList.remove('is-typing');
-                  void target.offsetWidth;
-                  target.classList.add('is-typing');
-
-                  // 2. Raccourcis clavier d'origine
+                  // Raccourcis clavier d'origine
                   if ((e.ctrlKey || e.metaKey) && !e.altKey) {
                     const k = e.key.toLowerCase();
                     if (k === 'z') { e.preventDefault(); stepHistory(e.shiftKey ? 1 : -1); }
