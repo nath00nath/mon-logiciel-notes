@@ -3947,7 +3947,7 @@ export default function App() {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', width: '100vw', height: 'calc(100vh - 34px)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', width: '100vw', height: 'calc(100vh - 34px)', overflow: 'hidden', position: 'relative' }}>
           <div className="glass sidebar-pane" style={sidebarStyle}>
             <div style={sidebarInnerStyle}>
               <div
