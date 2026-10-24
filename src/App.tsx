@@ -533,16 +533,16 @@ const GLOBAL_CSS = `
   .brand-mark {
     position: relative; width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04) 70%, rgba(0,0,0,0.3));
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    background: linear-gradient(135deg, #475569, #1e293b 60%, #0f172a);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
     transition: transform 0.4s var(--spring), box-shadow 0.3s ease;
   }
   .brand-mark svg { overflow: visible; }
   
   .brand:hover .brand-mark {
     transform: translateY(-2px) scale(1.04);
-    box-shadow: 0 12px 22px rgba(15,23,42,0.32);
+    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.35);
   }
 
   .feather-quill {
@@ -580,19 +580,10 @@ const GLOBAL_CSS = `
   .brand-word {
     font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
     font-style: normal; font-weight: 700; font-size: 1.55rem; line-height: 1;
-    letter-spacing: 0.04em; color: #0f172a; padding: 0 2px;
+    letter-spacing: 0.04em; color: var(--text-color); padding: 0 2px;
     display: block; position: relative;
     text-transform: lowercase;
-    background: linear-gradient(115deg,
-      #0f172a 0%, #0f172a 38%,
-      #ffffff 48%, #dbeafe 51%, #0f172a 62%, #0f172a 100%);
-    background-size: 260% 100%;
-    background-position: 100% 0;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 1px 0 rgba(255,255,255,0.25);
-    filter: drop-shadow(0 1px 0 rgba(15,23,42,0.28)) drop-shadow(0 3px 3px rgba(15,23,42,0.16));
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
     transition: filter 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     transform: translateY(0) scale(1);
   }
@@ -1691,7 +1682,8 @@ export default function App() {
         target?.closest('.tp-cell') ||
         target?.closest('.tb-btn') ||
         target?.closest('.tb-custom-trigger') ||
-        target?.closest('.size-box')
+        target?.closest('.size-box') ||
+        target?.closest('.top-menu-item')
       ) {
         return;
       }
@@ -2321,13 +2313,10 @@ export default function App() {
     setDropdown(null);
     setShowTablePicker(false);
 
-    if (activeTopMenu === menu) {
-      setActiveTopMenu(null);
-    } else {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setTopMenuPos({ x: rect.left, y: rect.bottom + 4 });
-      setActiveTopMenu(menu);
-    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTopMenuPos({ x: rect.left, y: rect.bottom + 4 });
+
+    setActiveTopMenu((prev) => (prev === menu ? null : menu));
   };
 
   const applyColor = (command: 'foreColor' | 'hiliteColor' | 'cellBg', color: string) => {
@@ -4170,10 +4159,17 @@ export default function App() {
                         />
                       </g>
                       
-                      {/* Rachis / Tige centrale de la plume */}
+                      {/* Rachis / Tige centrale de la plume avec contour pour relief universel */}
                       <path
                         d="M20.2 3.8C16.8 7.5 12 12.8 6.5 18.2"
-                        stroke={isDarkMode ? '#ffffff' : '#0f172a'}
+                        stroke="#ffffff"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        opacity="0.8"
+                      />
+                      <path
+                        d="M20.2 3.8C16.8 7.5 12 12.8 6.5 18.2"
+                        stroke="#0f172a"
                         strokeWidth="1"
                         strokeLinecap="round"
                       />
@@ -4252,7 +4248,16 @@ export default function App() {
                 placeholder="Rechercher…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                style={{ marginBottom: '14px', padding: '9px 12px', fontSize: '0.85rem' }}
+                style={{ 
+                  marginBottom: '14px', 
+                  padding: '9px 12px', 
+                  fontSize: '0.85rem',
+                  color: 'var(--text-color)',
+                  backgroundColor: 'var(--hover-bg)',
+                  borderColor: 'var(--border-color)',
+                  borderWidth: '1px',
+                  borderStyle: 'solid'
+                }}
               />
 
               <div className="scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
