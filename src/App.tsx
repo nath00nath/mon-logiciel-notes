@@ -285,20 +285,35 @@ const GLOBAL_CSS = `
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border-color) !important;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22), 0 4px 12px rgba(0, 0, 0, 0.12) !important;
     color: var(--text-color) !important;
+    transition: none !important;
   }
   .glass.menu::before, .glass.modal::before, .glass.picker::before { display: none; }
-  .glass.menu .menu-item { color: var(--text-color); }
+  .glass.menu .menu-item { 
+    color: var(--text-color); 
+    font-size: 0.83rem;
+  }
+  .glass.menu .menu-item span {
+    color: var(--text-muted);
+  }
   .glass.menu .menu-item:hover { background: var(--hover-bg); }
   .glass.menu .menu-item.active { background: var(--active-bg); font-weight: 650; }
-  .glass.menu .menu-item.danger { color: #ef4444; }
-  .glass.menu .menu-item.danger:hover { background: rgba(239,68,68,0.15); }
+  .glass.menu .menu-item.danger { color: #ef4444 !important; }
+  .glass.menu .menu-item.danger:hover { background: rgba(239,68,68,0.15) !important; }
+
+  .unfurl-scroll-menu {
+    animation: popMenu 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+  @keyframes popMenu {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
   .parchment-unfurl {
     transform: translateX(-50%);
     white-space: nowrap;
-    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08);
     border-radius: 14px;
   }
   .glass > .roll-roller {
@@ -357,26 +372,30 @@ const GLOBAL_CSS = `
     background: var(--hover-bg);
     border: 1px solid var(--border-color);
     white-space: nowrap; font-family: inherit;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    transition: transform 0.25s var(--spring), background 0.2s ease, box-shadow 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transform: translateY(0) scale(1);
+    transition: background 0.15s ease, border-color 0.15s ease;
   }
   .tb-btn::after {
     content: ''; position: absolute; top: 0; left: -120%; width: 55%; height: 100%;
-    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.7), transparent);
-    transform: skewX(-20deg); transition: left 0.6s var(--ease); pointer-events: none;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.65), transparent);
+    transform: skewX(-20deg); transition: left 0.55s var(--ease); pointer-events: none;
   }
-  .tb-btn:hover { background: var(--active-bg); transform: translateY(-1px); box-shadow: 0 5px 12px rgba(0,0,0,0.1); }
-  .tb-btn:active { transform: scale(0.92); }
+  .tb-btn:hover { 
+    background: var(--active-bg); 
+  }
+  .tb-btn:active { 
+    transform: scale(0.93);
+    transition: transform 0.08s ease;
+  }
   .tb-btn:active::after { left: 140%; }
   .tb-btn.on {
     background: var(--active-bg);
     border-color: var(--border-color);
     color: var(--text-color);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-    animation: btnPop 0.45s var(--spring);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
   }
   .tb-btn.on::after { left: 140%; }
-
   .tb-custom-trigger {
     height: 30px; padding: 0 9px; border-radius: 9px; flex-shrink: 0;
     border: 1px solid var(--border-color); background: var(--hover-bg);
@@ -514,8 +533,9 @@ const GLOBAL_CSS = `
   .brand-mark {
     position: relative; width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #475569, #1e293b 60%, #0f172a);
-    box-shadow: 0 7px 16px rgba(15,23,42,0.28);
+    background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04) 70%, rgba(0,0,0,0.3));
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
     transition: transform 0.4s var(--spring), box-shadow 0.3s ease;
   }
   .brand-mark svg { overflow: visible; }
@@ -2303,11 +2323,11 @@ export default function App() {
 
     if (activeTopMenu === menu) {
       setActiveTopMenu(null);
-      return;
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setTopMenuPos({ x: rect.left, y: rect.bottom + 4 });
+      setActiveTopMenu(menu);
     }
-    const rect = e.currentTarget.getBoundingClientRect();
-    setTopMenuPos({ x: rect.left, y: rect.bottom + 4 });
-    setActiveTopMenu(menu);
   };
 
   const applyColor = (command: 'foreColor' | 'hiliteColor' | 'cellBg', color: string) => {
@@ -3453,40 +3473,40 @@ export default function App() {
           )}
 
           {activeTopMenu === 'view' && (
-            <div style={{ padding: '4px', minWidth: '340px' }}>
+            <div style={{ padding: '6px', width: '420px', maxWidth: '420px', boxSizing: 'border-box' }}>
               <div className="menu-item" onClick={() => { setIsSidebarOpen(!isSidebarOpen); setActiveTopMenu(null); }}>
                 {isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}
               </div>
               
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
-              <div style={{ padding: '0 8px 6px 8px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
+              <div style={{ padding: '0 8px 4px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                 Mode sombre
               </div>
               
               <div 
                 className="menu-item" 
                 onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}
-                style={{ margin: '0 4px 8px 4px', border: isDarkMode ? '1px solid #3b82f6' : `1px solid var(--border-color)`, background: isDarkMode ? 'rgba(59,130,246,0.1)' : 'transparent' }}
+                style={{ margin: '0 4px 6px 4px', border: isDarkMode ? '1px solid #3b82f6' : `1px solid var(--border-color)`, background: isDarkMode ? 'rgba(59,130,246,0.15)' : 'transparent' }}
               >
                 {isDarkMode ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)' }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                     Activé
                   </span>
                 ) : (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)' }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                     Désactivé
                   </span>
                 )}
               </div>
 
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
-              <div style={{ padding: '0 8px 6px 8px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
+              <div style={{ padding: '0 8px 4px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                 Thèmes Google Chrome (20)
               </div>
               
-              <div className="scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', padding: '2px 4px 4px 4px', maxHeight: '280px', overflowY: 'auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', padding: '2px 4px' }}>
                 {CHROME_THEMES.map(t => {
                   const isSelected = theme === t.id && !isDarkMode;
                   return (
@@ -3494,36 +3514,33 @@ export default function App() {
                       key={t.id} 
                       onClick={() => { setTheme(t.id); setIsDarkMode(false); setActiveTopMenu(null); }}
                       style={{ 
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', 
-                        cursor: 'pointer', padding: '5px 3px', borderRadius: '8px',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', 
+                        cursor: 'pointer', padding: '4px 2px', borderRadius: '6px',
                         background: isSelected ? 'var(--active-bg)' : 'transparent',
-                        border: isSelected ? '1.5px solid #3b82f6' : '1.5px solid transparent',
-                        transition: 'background 0.2s, transform 0.2s var(--spring)'
+                        border: isSelected ? '1.5px solid #3b82f6' : '1.5px solid transparent'
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
                     >
                       <div style={{ 
-                        width: '100%', height: '42px', 
-                        borderRadius: '6px', border: `1px solid ${t.border}`,
+                        width: '100%', height: '36px', 
+                        borderRadius: '5px', border: `1px solid ${t.border}`,
                         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
                       }}>
-                        <div style={{ height: '13px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 3px', gap: '2px' }}>
-                          <div style={{ width: '18px', height: '9px', backgroundColor: t.toolbar, borderRadius: '3px 3px 0 0' }} />
+                        <div style={{ height: '11px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 2px', gap: '2px' }}>
+                          <div style={{ width: '16px', height: '8px', backgroundColor: t.toolbar, borderRadius: '2px 2px 0 0' }} />
                         </div>
                         <div style={{ flex: 1, backgroundColor: t.toolbar, display: 'flex' }}>
-                          <div style={{ width: '15px', borderRight: `1px solid ${t.border}`, padding: '2px' }}>
-                            <div style={{ width: '8px', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
-                            <div style={{ width: '6px', height: '2px', background: t.border, borderRadius: '1px' }} />
+                          <div style={{ width: '12px', borderRight: `1px solid ${t.border}`, padding: '2px' }}>
+                            <div style={{ width: '6px', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
+                            <div style={{ width: '4px', height: '2px', background: t.border, borderRadius: '1px' }} />
                           </div>
                           <div style={{ flex: 1, backgroundColor: t.page, padding: '2px' }}>
-                            <div style={{ width: '80%', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
-                            <div style={{ width: '45%', height: '2px', background: t.border, borderRadius: '1px' }} />
+                            <div style={{ width: '75%', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
+                            <div style={{ width: '40%', height: '2px', background: t.border, borderRadius: '1px' }} />
                           </div>
                         </div>
                       </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+                      <span style={{ fontSize: '0.62rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                         {t.label}
                       </span>
                     </div>
@@ -4156,7 +4173,7 @@ export default function App() {
                       {/* Rachis / Tige centrale de la plume */}
                       <path
                         d="M20.2 3.8C16.8 7.5 12 12.8 6.5 18.2"
-                        stroke="#0f172a"
+                        stroke={isDarkMode ? '#ffffff' : '#0f172a'}
                         strokeWidth="1"
                         strokeLinecap="round"
                       />
