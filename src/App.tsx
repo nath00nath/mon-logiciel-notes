@@ -4428,7 +4428,7 @@ export default function App() {
               </div>
             </div>
 
-            {activeNote && (
+            {activeNote && activeNote.tabs && activeNote.tabs.length > 0 && (
               <div className="tabs-bar">
                 {activeNote.tabs.map((tab) => {
                   const isActive = activeTab?.id === tab.id;
@@ -4468,12 +4468,23 @@ export default function App() {
               className="glass scroll"
               style={{
                 flex: 1,
-                minHeight: 0,
                 borderRadius: 0,
                 border: 'none',
                 display: 'block',
                 overflowY: 'auto',
                 position: 'relative',
+                background: '#ffffff',
+              }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget && editorRef.current) {
+                  editorRef.current.focus();
+                  const sel = window.getSelection();
+                  const range = document.createRange();
+                  range.selectNodeContents(editorRef.current);
+                  range.collapse(false);
+                  sel?.removeAllRanges();
+                  sel?.addRange(range);
+                }
               }}
             >
               <div
@@ -4504,7 +4515,7 @@ export default function App() {
                 onMouseUp={checkSelectionFormat}
                 onKeyUp={checkSelectionFormat}
                 style={{
-                  minHeight: '100%',
+                  minHeight: '30px',
                   padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'normal' ? '40px 64px' : marginSize === 'large' ? '40px 80px' : '40px 100px',
                   outline: 'none',
                   fontSize: '16px',
