@@ -273,20 +273,27 @@ const GLOBAL_CSS = `
 
   .glass {
     position: relative;
-    background: var(--menu-bg);
+    background: var(--toolbar-bg);
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
   }
   .glass::before { display: none; }
   .glass > * { position: relative; z-index: 1; }
 
   .glass.menu, .glass.modal, .glass.picker {
-    background: var(--menu-bg);
-    border: 1px solid var(--border-color);
+    background: var(--popup-bg) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    color: var(--text-color) !important;
   }
   .glass.menu::before, .glass.modal::before, .glass.picker::before { display: none; }
-  .glass.menu .menu-item:hover { background: #f1f5f9; }
-  .glass.menu .menu-item.danger:hover { background: #fee2e2; }
+  .glass.menu .menu-item { color: var(--text-color); }
+  .glass.menu .menu-item:hover { background: var(--hover-bg); }
+  .glass.menu .menu-item.active { background: var(--active-bg); font-weight: 650; }
+  .glass.menu .menu-item.danger { color: #ef4444; }
+  .glass.menu .menu-item.danger:hover { background: rgba(239,68,68,0.15); }
 
   .parchment-unfurl {
     transform: translateX(-50%);
@@ -350,15 +357,25 @@ const GLOBAL_CSS = `
     background: var(--hover-bg);
     border: 1px solid var(--border-color);
     white-space: nowrap; font-family: inherit;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    transition: transform 0.2s var(--spring), background 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    transition: transform 0.25s var(--spring), background 0.2s ease, box-shadow 0.25s ease;
   }
-  .tb-btn:hover { background: var(--active-bg); transform: translateY(-1px); }
-  .tb-btn:active { transform: scale(0.95); }
+  .tb-btn::after {
+    content: ''; position: absolute; top: 0; left: -120%; width: 55%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.7), transparent);
+    transform: skewX(-20deg); transition: left 0.6s var(--ease); pointer-events: none;
+  }
+  .tb-btn:hover { background: var(--active-bg); transform: translateY(-1px); box-shadow: 0 5px 12px rgba(0,0,0,0.1); }
+  .tb-btn:active { transform: scale(0.92); }
+  .tb-btn:active::after { left: 140%; }
   .tb-btn.on {
-    background: var(--active-bg); border-color: #3b82f6;
-    color: #3b82f6;
+    background: var(--active-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    animation: btnPop 0.45s var(--spring);
   }
+  .tb-btn.on::after { left: 140%; }
 
   .tb-custom-trigger {
     height: 30px; padding: 0 9px; border-radius: 9px; flex-shrink: 0;
@@ -1109,74 +1126,28 @@ const computeSplit = (widths: number[], c: number, n: number) => {
 };
 
 export default function App() {
-  // --- THÈMES INSPIRÉS DE GOOGLE CHROME ET MODE SOMBRE ---
+  // --- 20 THÈMES GOOGLE CHROME + MODE SOMBRE ---
   const CHROME_THEMES = [
-    {
-      id: 'chrome-classic',
-      label: 'Classique',
-      frame: '#dee1e6',
-      toolbar: '#ffffff',
-      page: '#ffffff',
-      tabActive: '#ffffff',
-      text: '#202124',
-      textMuted: '#5f6368',
-      border: '#dadce0',
-    },
-    {
-      id: 'bleu',
-      label: 'Bleu océan',
-      frame: '#c2e7ff',
-      toolbar: '#e8f0fe',
-      page: '#f8fafd',
-      tabActive: '#ffffff',
-      text: '#041e49',
-      textMuted: '#444746',
-      border: '#b8cde4',
-    },
-    {
-      id: 'vert',
-      label: 'Menthe',
-      frame: '#c4eed0',
-      toolbar: '#e6f4ea',
-      page: '#f6fbf7',
-      tabActive: '#ffffff',
-      text: '#072711',
-      textMuted: '#3c4043',
-      border: '#b4dec0',
-    },
-    {
-      id: 'jaune',
-      label: 'Soleil doré',
-      frame: '#feefc3',
-      toolbar: '#fef7e0',
-      page: '#fffdf5',
-      tabActive: '#ffffff',
-      text: '#3c2f00',
-      textMuted: '#5f5332',
-      border: '#ebd79b',
-    },
-    {
-      id: 'rose',
-      label: 'Pivoine',
-      frame: '#fad2cf',
-      toolbar: '#fce8e6',
-      page: '#fff8f7',
-      tabActive: '#ffffff',
-      text: '#410e0b',
-      textMuted: '#5f4341',
-      border: '#e8b8b5',
-    },
-    {
-      id: 'violet',
-      label: 'Lavande',
-      frame: '#e8dff5',
-      toolbar: '#f3e8fd',
-      page: '#faf7fc',
-      tabActive: '#ffffff',
-      text: '#271038',
-      textMuted: '#52435e',
-      border: '#d7c7e8',
-    },
+    { id: 'chrome-classic', label: 'Classique', frame: '#dee1e6', toolbar: '#ffffff', page: '#ffffff', tabActive: '#ffffff', popupBg: '#ffffff', text: '#202124', textMuted: '#5f6368', border: '#dadce0' },
+    { id: 'bleu-ocean', label: 'Bleu Océan', frame: '#c2e7ff', toolbar: '#e8f0fe', page: '#f8fafd', tabActive: '#ffffff', popupBg: '#ffffff', text: '#041e49', textMuted: '#444746', border: '#b8cde4' },
+    { id: 'menthe', label: 'Menthe Douce', frame: '#c4eed0', toolbar: '#e6f4ea', page: '#f6fbf7', tabActive: '#ffffff', popupBg: '#ffffff', text: '#072711', textMuted: '#3c4043', border: '#b4dec0' },
+    { id: 'soleil', label: 'Soleil Doré', frame: '#feefc3', toolbar: '#fef7e0', page: '#fffdf5', tabActive: '#ffffff', popupBg: '#ffffff', text: '#3c2f00', textMuted: '#5f5332', border: '#ebd79b' },
+    { id: 'pivoine', label: 'Rose Pivoine', frame: '#fad2cf', toolbar: '#fce8e6', page: '#fff8f7', tabActive: '#ffffff', popupBg: '#ffffff', text: '#410e0b', textMuted: '#5f4341', border: '#e8b8b5' },
+    { id: 'lavande', label: 'Lavande Zen', frame: '#e8dff5', toolbar: '#f3e8fd', page: '#faf7fc', tabActive: '#ffffff', popupBg: '#ffffff', text: '#271038', textMuted: '#52435e', border: '#d7c7e8' },
+    { id: 'peche', label: 'Pêche Veloutée', frame: '#fed7aa', toolbar: '#ffedd5', page: '#fffaf5', tabActive: '#ffffff', popupBg: '#ffffff', text: '#431407', textMuted: '#7c2d12', border: '#fdba74' },
+    { id: 'cyan-lagon', label: 'Cyan Lagon', frame: '#bae6fd', toolbar: '#e0f2fe', page: '#f0f9ff', tabActive: '#ffffff', popupBg: '#ffffff', text: '#082f49', textMuted: '#0369a1', border: '#7dd3fc' },
+    { id: 'matcha', label: 'Matcha Bio', frame: '#d9f99d', toolbar: '#ecfccb', page: '#f7fee7', tabActive: '#ffffff', popupBg: '#ffffff', text: '#1a2e05', textMuted: '#3f6212', border: '#bef264' },
+    { id: 'framboise', label: 'Framboise Givrée', frame: '#fbcfe8', toolbar: '#fce7f3', page: '#fdf2f8', tabActive: '#ffffff', popupBg: '#ffffff', text: '#500724', textMuted: '#831843', border: '#f472b6' },
+    { id: 'ambre-automne', label: 'Ambre Automne', frame: '#fde68a', toolbar: '#fef3c7', page: '#fffbeb', tabActive: '#ffffff', popupBg: '#ffffff', text: '#451a03', textMuted: '#78350f', border: '#fcd34d' },
+    { id: 'sauge-nordique', label: 'Sauge Nordique', frame: '#cbd5e1', toolbar: '#e2e8f0', page: '#f8fafc', tabActive: '#ffffff', popupBg: '#ffffff', text: '#0f172a', textMuted: '#475569', border: '#94a3b8' },
+    { id: 'bleu-canard', label: 'Bleu Canard', frame: '#99f6e4', toolbar: '#ccfbf1', page: '#f0fdfa', tabActive: '#ffffff', popupBg: '#ffffff', text: '#042f2e', textMuted: '#115e59', border: '#5eead4' },
+    { id: 'mauve-crepuscule', label: 'Mauve Crépuscule', frame: '#ddd6fe', toolbar: '#ede9fe', page: '#f5f3ff', tabActive: '#ffffff', popupBg: '#ffffff', text: '#2e1065', textMuted: '#5b21b6', border: '#c4b5fd' },
+    { id: 'aurore-boreale', label: 'Aurore Boréale', frame: '#a7f3d0', toolbar: '#d1fae5', page: '#ecfdf5', tabActive: '#ffffff', popupBg: '#ffffff', text: '#022c22', textMuted: '#065f46', border: '#6ee7b7' },
+    { id: 'fraise-creme', label: 'Fraise & Crème', frame: '#fecdd3', toolbar: '#ffe4e6', page: '#fff1f2', tabActive: '#ffffff', popupBg: '#ffffff', text: '#4c0519', textMuted: '#9f1239', border: '#fda4af' },
+    { id: 'bleu-ardoise', label: 'Bleu Ardoise', frame: '#1e293b', toolbar: '#334155', page: '#0f172a', tabActive: '#334155', popupBg: '#1e293b', text: '#f8fafc', textMuted: '#94a3b8', border: '#475569' },
+    { id: 'vert-foret', label: 'Vert Forêt Sombre', frame: '#064e3b', toolbar: '#065f46', page: '#022c22', tabActive: '#065f46', popupBg: '#064e3b', text: '#ecfdf5', textMuted: '#a7f3d0', border: '#047857' },
+    { id: 'indigo-nuit', label: 'Indigo Nuit', frame: '#1e1b4b', toolbar: '#312e81', page: '#0f0e26', tabActive: '#312e81', popupBg: '#1e1b4b', text: '#e0e7ff', textMuted: '#a5b4fc', border: '#4338ca' },
+    { id: 'carbone-oled', label: 'Noir Carbone OLED', frame: '#111111', toolbar: '#181818', page: '#0a0a0a', tabActive: '#181818', popupBg: '#181818', text: '#f3f4f6', textMuted: '#9ca3af', border: '#2e2e2e' }
   ];
 
   const DARK_THEME = {
@@ -1186,6 +1157,7 @@ export default function App() {
     toolbar: '#292a2d',
     page: '#1f1f1f',
     tabActive: '#292a2d',
+    popupBg: '#292a2d',
     text: '#e8eaed',
     textMuted: '#9aa0a6',
     border: '#3c4043',
@@ -1199,7 +1171,7 @@ export default function App() {
     : CHROME_THEMES.find((t) => t.id === theme) || CHROME_THEMES[0];
 
   const borderColor = activeTheme.border;
-  const menuBg = activeTheme.toolbar;
+  const menuBg = activeTheme.popupBg;
   const [textColor, setTextColor] = useState(activeTheme.text);
 
   useEffect(() => {
@@ -3090,6 +3062,7 @@ export default function App() {
       '--toolbar-bg': activeTheme.toolbar,
       '--tab-active-bg': activeTheme.tabActive,
       '--page-bg': activeTheme.page,
+      '--popup-bg': activeTheme.popupBg,
       '--text-color': activeTheme.text,
       '--text-muted': activeTheme.textMuted,
       '--border-color': activeTheme.border,
@@ -3103,7 +3076,7 @@ export default function App() {
       overflow: 'hidden',
       backgroundColor: activeTheme.toolbar,
       color: activeTheme.text,
-      transition: 'background-color 0.25s ease, color 0.25s ease'
+      transition: 'background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease, border-color 0.4s ease'
     } as React.CSSProperties}>
 
       <input
@@ -3480,13 +3453,13 @@ export default function App() {
           )}
 
           {activeTopMenu === 'view' && (
-            <div style={{ padding: '4px', minWidth: '280px' }}>
+            <div style={{ padding: '4px', minWidth: '340px' }}>
               <div className="menu-item" onClick={() => { setIsSidebarOpen(!isSidebarOpen); setActiveTopMenu(null); }}>
                 {isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}
               </div>
               
-              <div style={{ height: '1px', background: borderColor, margin: '8px 0' }} />
-              <div style={{ padding: '0 8px 8px 8px', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
+              <div style={{ padding: '0 8px 6px 8px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                 Mode sombre
               </div>
               
@@ -3508,12 +3481,12 @@ export default function App() {
                 )}
               </div>
 
-              <div style={{ height: '1px', background: borderColor, margin: '8px 0' }} />
-              <div style={{ padding: '0 8px 8px 8px', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
-                Thèmes
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
+              <div style={{ padding: '0 8px 6px 8px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                Thèmes Google Chrome (20)
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', padding: '0 4px 4px 4px' }}>
+              <div className="scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', padding: '2px 4px 4px 4px', maxHeight: '280px', overflowY: 'auto' }}>
                 {CHROME_THEMES.map(t => {
                   const isSelected = theme === t.id && !isDarkMode;
                   return (
@@ -3521,35 +3494,36 @@ export default function App() {
                       key={t.id} 
                       onClick={() => { setTheme(t.id); setIsDarkMode(false); setActiveTopMenu(null); }}
                       style={{ 
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', 
-                        cursor: 'pointer', padding: '6px 4px', borderRadius: '8px',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', 
+                        cursor: 'pointer', padding: '5px 3px', borderRadius: '8px',
                         background: isSelected ? 'var(--active-bg)' : 'transparent',
-                        border: isSelected ? '1px solid #3b82f6' : '1px solid transparent'
+                        border: isSelected ? '1.5px solid #3b82f6' : '1.5px solid transparent',
+                        transition: 'background 0.2s, transform 0.2s var(--spring)'
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
                     >
                       <div style={{ 
-                        width: '100%', height: '46px', 
+                        width: '100%', height: '42px', 
                         borderRadius: '6px', border: `1px solid ${t.border}`,
                         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.06)'
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                       }}>
-                        {/* Barre de cadre / onglet miniature */}
-                        <div style={{ height: '14px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 4px', gap: '2px' }}>
-                          <div style={{ width: '22px', height: '10px', backgroundColor: t.toolbar, borderRadius: '4px 4px 0 0' }} />
+                        <div style={{ height: '13px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 3px', gap: '2px' }}>
+                          <div style={{ width: '18px', height: '9px', backgroundColor: t.toolbar, borderRadius: '3px 3px 0 0' }} />
                         </div>
-                        {/* Barre d'outils + corps */}
                         <div style={{ flex: 1, backgroundColor: t.toolbar, display: 'flex' }}>
-                          <div style={{ width: '18px', borderRight: `1px solid ${t.border}`, padding: '3px' }}>
-                            <div style={{ width: '10px', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
-                            <div style={{ width: '8px', height: '2px', background: t.border, borderRadius: '1px' }} />
+                          <div style={{ width: '15px', borderRight: `1px solid ${t.border}`, padding: '2px' }}>
+                            <div style={{ width: '8px', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
+                            <div style={{ width: '6px', height: '2px', background: t.border, borderRadius: '1px' }} />
                           </div>
-                          <div style={{ flex: 1, backgroundColor: t.page, padding: '3px' }}>
+                          <div style={{ flex: 1, backgroundColor: t.page, padding: '2px' }}>
                             <div style={{ width: '80%', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
-                            <div style={{ width: '50%', height: '2px', background: t.border, borderRadius: '1px' }} />
+                            <div style={{ width: '45%', height: '2px', background: t.border, borderRadius: '1px' }} />
                           </div>
                         </div>
                       </div>
-                      <span style={{ fontSize: '0.7rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center' }}>
+                      <span style={{ fontSize: '0.66rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                         {t.label}
                       </span>
                     </div>
