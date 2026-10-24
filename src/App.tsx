@@ -857,72 +857,16 @@ const GLOBAL_CSS = `
   @keyframes noteIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes btnPop { 0% { transform: scale(0.85); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
-  /* --- Curseur Large sur mesure (Habillage) --- */
   .note-editor {
     animation: noteIn 0.4s var(--ease);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeSpeed;
     cursor: text !important;
-    caret-color: transparent !important; /* On masque le curseur natif trop fin */
     min-height: 100%;
     outline: none;
     position: relative;
     transition: color 0.3s ease;
-  }
-
-  .custom-wide-caret {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 8px;
-    background-color: var(--caret-theme-color, var(--text-color));
-    box-shadow: 0 0 12px var(--caret-theme-glow, transparent);
-    pointer-events: none;
-    z-index: 500;
-    border-radius: 2.5px;
-    will-change: transform, height, background-color;
-    /* Glissement ultra-fluide avec léger ressort (style Smooth Caret) */
-    transition:
-      transform 0.085s cubic-bezier(0.22, 1, 0.36, 1),
-      height 0.12s cubic-bezier(0.22, 1, 0.36, 1),
-      background-color 0.35s ease,
-      box-shadow 0.35s ease;
-    animation: wideCaretBlink 1.1s ease-in-out infinite;
-  }
-
-  /* Quand on écrit : le curseur reste bien opaque (ne clignote pas) */
-  .custom-wide-caret.typing {
-    animation: none;
-    opacity: 0.88;
-  }
-
-  .custom-wide-caret-inner {
-    width: 100%;
-    height: 100%;
-    border-radius: inherit;
-    background: inherit;
-    transform-origin: center center;
-  }
-
-  /* Rebond élastique satisfaisant à chaque lettre tapée */
-  .custom-wide-caret.typing .custom-wide-caret-inner {
-    animation: caretKeyPop 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  @keyframes caretKeyPop {
-    0%   { transform: scaleX(1) scaleY(1); }
-    40%  { transform: scaleX(1.32) scaleY(0.86); }
-    100% { transform: scaleX(1) scaleY(1); }
-  }
-
-  @keyframes wideCaretBlink {
-    0%, 100% { opacity: 0.85; }
-    50% { opacity: 0.12; }
-  }
-
-  .is-typing {
-    animation: typePulse 0.1s ease-out;
   }
 
   .note-editor:empty::before,
@@ -1629,75 +1573,6 @@ export default function App() {
   const historyRef = useRef<Record<string, { stack: Snapshot[]; index: number }>>({});
   const lastPushRef = useRef(0);
   const stepRef = useRef<(dir: -1 | 1) => void>(() => {});
-
-  // --- DEBUT DU CODE DU CURSEUR WIDE ---
-  const [customCaret, setCustomCaret] = useState<{ top: number; left: number; height: number; visible: boolean }>({
-    top: 0,
-    left: 0,
-    height: 20,
-    visible: false,
-  });
-  const [isTypingCaret, setIsTypingCaret] = useState(false);
-  const [typingKey, setTypingKey] = useState(0);
-  const typingTimeoutRef = useRef<number | null>(null);
-
-  const triggerCaretTyping = useCallback(() => {
-    setIsTypingCaret(true);
-    setTypingKey((k) => k + 1);
-    if (typingTimeoutRef.current) window.clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = window.setTimeout(() => {
-      setIsTypingCaret(false);
-    }, 450);
-  }, []);
-
-  const updateCustomCaret = useCallback(() => {
-    const ed = editorRef.current;
-    const sel = window.getSelection();
-    if (!ed || !sel || sel.rangeCount === 0 || document.activeElement !== ed || !sel.isCollapsed) {
-      setCustomCaret((prev) => (prev.visible ? { ...prev, visible: false } : prev));
-      return;
-    }
-
-    const range = sel.getRangeAt(0).cloneRange();
-    if (!ed.contains(range.startContainer)) {
-      setCustomCaret((prev) => (prev.visible ? { ...prev, visible: false } : prev));
-      return;
-    }
-
-    const rects = range.getClientRects();
-    let rect: DOMRect | null = rects.length > 0 ? rects[0] : null;
-
-    if (!rect || (rect.width === 0 && rect.height === 0)) {
-      const tempSpan = document.createElement('span');
-      tempSpan.textContent = '\u200b';
-      range.insertNode(tempSpan);
-      rect = tempSpan.getBoundingClientRect();
-      const parent = tempSpan.parentNode;
-      tempSpan.remove();
-      parent?.normalize();
-    }
-
-    if (rect && rect.height > 0) {
-      setCustomCaret({
-        top: rect.top,
-        left: rect.left,
-        height: rect.height,
-        visible: true,
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('selectionchange', updateCustomCaret);
-    window.addEventListener('resize', updateCustomCaret);
-    window.addEventListener('scroll', updateCustomCaret, true);
-    return () => {
-      document.removeEventListener('selectionchange', updateCustomCaret);
-      window.removeEventListener('resize', updateCustomCaret);
-      window.removeEventListener('scroll', updateCustomCaret, true);
-    };
-  }, [updateCustomCaret]);
-  // --- FIN DU CODE DU CURSEUR WIDE ---
 
   const selectedCellsRef = useRef<Set<HTMLTableCellElement>>(new Set());
   const isSelectingCellsRef = useRef(false);
@@ -4941,12 +4816,8 @@ export default function App() {
                 onContextMenu={handleEditorContextMenu}
                 onMouseMove={handleEditorMouseMove}
                 onMouseDown={handleEditorMouseDown}
-                onFocus={updateCustomCaret}
-                onBlur={() => setCustomCaret((prev) => ({ ...prev, visible: false }))}
                 onInput={() => {
                   handleContentChange('typing');
-                  triggerCaretTyping();
-                  updateCustomCaret();
                 }}
                 onKeyDown={(e) => {
                   if ((e.ctrlKey || e.metaKey) && !e.altKey) {
@@ -4963,8 +4834,8 @@ export default function App() {
                     else if (!e.shiftKey && k === 'k') handleInsertLink(e);
                   }
                 }}
-                onMouseUp={() => { checkSelectionFormat(); updateCustomCaret(); }}
-                onKeyUp={() => { checkSelectionFormat(); updateCustomCaret(); }}
+                onMouseUp={checkSelectionFormat}
+                onKeyUp={checkSelectionFormat}
                 style={{
                   flex: 1,
                   minHeight: '100%',
@@ -4979,17 +4850,6 @@ export default function App() {
                   fontFamily: "'IBM Plex Sans', sans-serif",
                 }}
               />
-              {customCaret.visible && (
-                <div
-                  className={`custom-wide-caret${isTypingCaret ? ' typing' : ''}`}
-                  style={{
-                    transform: `translate3d(${customCaret.left}px, ${customCaret.top}px, 0)`,
-                    height: `${customCaret.height}px`,
-                  }}
-                >
-                  <div key={typingKey} className="custom-wide-caret-inner" />
-                </div>
-              )}
             </div>
           </div>
         </div>
