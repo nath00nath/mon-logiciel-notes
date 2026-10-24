@@ -320,80 +320,74 @@ const GLOBAL_CSS = `
   .top-menubar {
     height: 34px; min-height: 34px; width: 100vw;
     display: flex; align-items: center; gap: 4px; padding: 0 16px;
-    background: rgba(255, 255, 255, 0.52);
-    border-bottom: 1px solid rgba(15, 23, 42, 0.09);
+    background: var(--frame-bg);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
     z-index: 600;
   }
   .top-menu-item {
     padding: 3px 9px; border-radius: 6px; cursor: pointer;
-    font-size: 0.8rem; font-weight: 500; color: #1e293b;
+    font-size: 0.8rem; font-weight: 500; color: var(--text-color);
     transition: background 0.15s, color 0.15s;
   }
   .top-menu-item:hover, .top-menu-item.active {
-    background: rgba(15, 23, 42, 0.08);
-    color: #0f172a;
+    background: var(--hover-bg);
+    color: var(--text-color);
   }
 
   .sidebar-pane {
-    background: linear-gradient(135deg, rgba(245,247,250,0.8), rgba(235,240,246,0.68));
-    border-right: 1.5px solid rgba(15, 23, 42, 0.12) !important;
-    box-shadow: 6px 0 24px rgba(15, 23, 42, 0.05);
+    background: var(--toolbar-bg) !important;
+    border-right: 1px solid var(--border-color) !important;
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.08);
+    color: var(--text-color);
   }
 
   .tb-btn {
     position: relative; overflow: hidden; flex-shrink: 0;
     height: 30px; min-width: 30px; padding: 0 8px; gap: 4px;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 9px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: #1e293b;
-    background: rgba(255,255,255,0.45);
-    border: 1px solid rgba(255,255,255,0.85);
+    border-radius: 9px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--text-color);
+    background: var(--hover-bg);
+    border: 1px solid var(--border-color);
     white-space: nowrap; font-family: inherit;
-    box-shadow: 0 2px 6px rgba(30,41,90,0.06);
-    transition: transform 0.25s var(--spring), background 0.2s ease, box-shadow 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.2s var(--spring), background 0.2s ease;
   }
-  .tb-btn::after {
-    content: ''; position: absolute; top: 0; left: -120%; width: 55%; height: 100%;
-    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.95), transparent);
-    transform: skewX(-20deg); transition: left 0.6s var(--ease); pointer-events: none;
-  }
-  .tb-btn:hover { background: rgba(255,255,255,0.75); transform: translateY(-1px); box-shadow: 0 5px 12px rgba(30,41,90,0.12); }
-  .tb-btn:active { transform: scale(0.92); }
-  .tb-btn:active::after { left: 140%; }
+  .tb-btn:hover { background: var(--active-bg); transform: translateY(-1px); }
+  .tb-btn:active { transform: scale(0.95); }
   .tb-btn.on {
-    background: rgba(15,23,42,0.12); border-color: rgba(15,23,42,0.25);
-    box-shadow: inset 0 1px 3px rgba(15,23,42,0.15); animation: btnPop 0.45s var(--spring);
+    background: var(--active-bg); border-color: #3b82f6;
+    color: #3b82f6;
   }
-  .tb-btn.on::after { left: 140%; }
 
   .tb-custom-trigger {
     height: 30px; padding: 0 9px; border-radius: 9px; flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,0.85); background: rgba(255,255,255,0.5);
-    font-size: 0.8rem; font-weight: 600; color: #1e293b; cursor: pointer;
+    border: 1px solid var(--border-color); background: var(--hover-bg);
+    font-size: 0.8rem; font-weight: 600; color: var(--text-color); cursor: pointer;
     display: flex; align-items: center; justify-content: space-between; gap: 6px;
-    font-family: inherit; box-shadow: 0 2px 6px rgba(30,41,90,0.05);
-    transition: background 0.2s ease, box-shadow 0.25s ease, transform 0.25s var(--spring);
+    font-family: inherit; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: background 0.2s ease, transform 0.2s var(--spring);
   }
-  .tb-custom-trigger:hover { background: rgba(255,255,255,0.85); box-shadow: 0 5px 12px rgba(30,41,90,0.1); transform: translateY(-1px); }
+  .tb-custom-trigger:hover { background: var(--active-bg); transform: translateY(-1px); }
   .tb-custom-trigger:active { transform: scale(0.95); }
 
-  .tb-sep { height: 18px; width: 1.5px; background: rgba(15,23,42,0.15); flex-shrink: 0; }
+  .tb-sep { height: 18px; width: 1px; background: var(--border-color); flex-shrink: 0; }
 
   .size-box {
     display: flex; align-items: center; height: 30px; width: 84px; min-width: 84px; max-width: 84px;
     padding: 0 1px; flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,0.85); border-radius: 9px; background: rgba(255,255,255,0.5);
-    box-shadow: 0 2px 6px rgba(30,41,90,0.05);
+    border: 1px solid var(--border-color); border-radius: 9px; background: var(--hover-bg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
   .size-box button {
     border: none; background: transparent; cursor: pointer; width: 23px; height: 100%;
     display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0;
-    font-weight: bold; color: #1e293b; border-radius: 7px; transition: background 0.2s, transform 0.2s var(--spring);
+    font-weight: bold; color: var(--text-color); border-radius: 7px; transition: background 0.2s;
   }
-  .size-box button:hover { background: rgba(255,255,255,0.9); }
-  .size-box button:active { transform: scale(0.85); }
+  .size-box button:hover { background: var(--active-bg); }
   .size-trigger-btn {
     border: none; background: transparent; font-size: 0.8rem; font-weight: 600; cursor: pointer;
-    color: #1e293b; width: 38px; min-width: 38px; max-width: 38px; padding: 0; font-family: inherit; height: 100%;
+    color: var(--text-color); width: 38px; min-width: 38px; max-width: 38px; padding: 0; font-family: inherit; height: 100%;
     display: flex; align-items: center; justify-content: center; gap: 2px;
   }
   .size-trigger-btn span:first-child {
@@ -404,40 +398,39 @@ const GLOBAL_CSS = `
   }
 
   .tabs-bar {
-    display: flex; align-items: flex-end; gap: 6px; padding: 8px 18px 0 18px;
-    background: rgba(230, 235, 243, 0.45);
-    border-bottom: 1px solid rgba(15,23,42,0.08);
+    display: flex; align-items: flex-end; gap: 6px; padding: 6px 18px 0 18px;
+    background: var(--frame-bg);
+    border-bottom: 1px solid var(--border-color);
     overflow-x: auto; flex-shrink: 0;
   }
   .tab-item {
     display: flex; align-items: center; gap: 7px; padding: 7px 14px;
-    border-radius: 11px 11px 0 0; font-size: 0.82rem; font-weight: 500; color: #475569;
-    cursor: pointer; border: 1px solid rgba(255,255,255,0.65); border-bottom: none;
-    background: rgba(255,255,255,0.32); backdrop-filter: blur(12px);
-    transition: transform 0.25s var(--spring), background 0.2s, color 0.2s;
+    border-radius: 10px 10px 0 0; font-size: 0.82rem; font-weight: 500; color: var(--text-muted);
+    cursor: pointer; border: 1px solid transparent; border-bottom: none;
+    background: transparent;
+    transition: background 0.15s, color 0.15s;
     max-width: 200px;
   }
-  .tab-item:hover { color: #0f172a; background: rgba(255,255,255,0.65); transform: translateY(-2px); }
+  .tab-item:hover { color: var(--text-color); background: var(--hover-bg); }
   .tab-item.active {
-    color: #0f172a; font-weight: 650;
-    background: rgba(255,255,255,0.88);
-    border-color: rgba(255,255,255,0.95);
-    box-shadow: 0 -4px 12px rgba(30,41,90,0.06);
-    transform: translateY(0);
+    color: var(--text-color); font-weight: 650;
+    background: var(--tab-active-bg);
+    border-color: var(--border-color);
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
   }
   .tab-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tab-close {
-    font-size: 0.72rem; border-radius: 5px; padding: 1px 4px; opacity: 0.55;
+    font-size: 0.72rem; border-radius: 5px; padding: 1px 4px; opacity: 0.65;
     transition: opacity 0.2s, background 0.2s;
   }
-  .tab-close:hover { opacity: 1; background: rgba(15,23,42,0.1); }
+  .tab-close:hover { opacity: 1; background: var(--hover-bg); }
   .tab-add-btn {
-    border: 1px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.45);
+    border: 1px solid var(--border-color); background: var(--hover-bg);
     cursor: pointer; padding: 4px 10px; margin-bottom: 3px;
-    border-radius: 8px; font-size: 0.95rem; font-weight: 700; color: #334155;
-    transition: transform 0.2s var(--spring), background 0.2s;
+    border-radius: 8px; font-size: 0.95rem; font-weight: 700; color: var(--text-color);
+    transition: background 0.2s, transform 0.2s;
   }
-  .tab-add-btn:hover { background: rgba(255,255,255,0.85); transform: scale(1.08); }
+  .tab-add-btn:hover { background: var(--active-bg); transform: scale(1.08); }
 
   .action-btn {
     position: relative; overflow: hidden; flex: 1;
@@ -822,11 +815,20 @@ const GLOBAL_CSS = `
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeSpeed;
+    cursor: text !important;
+    caret-color: var(--text-color) !important;
+    min-height: 100%;
+  }
+  .note-editor:empty::before,
+  .note-editor p:empty::before {
+    content: '';
+    display: inline-block;
   }
   .note-editor h1, .note-editor h2, .note-editor h3, .note-editor p, .note-editor div {
     margin: 0 0 0.4em 0 !important;
     line-height: 1.3 !important;
     display: block;
+    color: var(--text-color);
   }
   .note-editor blockquote { margin: 0.6em 0; padding: 0.3em 1em; border-left: 3px solid #94a3b8; color: #475569; background: rgba(255,255,255,0.4); border-radius: 0 10px 10px 0; }
   .note-editor ul { padding-left: 1.5em; }
@@ -1107,30 +1109,102 @@ const computeSplit = (widths: number[], c: number, n: number) => {
 };
 
 export default function App() {
-  // --- NOUVEAUX ÉTATS : THEMES ET MODE SOMBRE ---
-  const [theme, setTheme] = useState('blanc');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-
-  const THEMES = [
-    { id: 'blanc', label: 'Blanc pur', bg: '#ffffff' },
-    { id: 'gris', label: 'Gris neutre', bg: '#f8f9fa' },
-    { id: 'bleu', label: 'Bleu ciel', bg: '#f0f9ff' },
-    { id: 'indigo', label: 'Indigo doux', bg: '#eef2ff' },
-    { id: 'violet', label: 'Violet pastel', bg: '#faf5ff' },
-    { id: 'rose', label: 'Rose poudré', bg: '#fdf2f8' },
-    { id: 'rouge', label: 'Rouge pastel', bg: '#fef2f2' },
-    { id: 'orange', label: 'Orange pêche', bg: '#fff7ed' },
-    { id: 'jaune', label: 'Jaune aurore', bg: '#fefce8' },
-    { id: 'vert', label: 'Vert menthe', bg: '#f0fdf4' },
-    { id: 'cyan', label: 'Cyan lagon', bg: '#ecfeff' }
+  // --- THÈMES INSPIRÉS DE GOOGLE CHROME ET MODE SOMBRE ---
+  const CHROME_THEMES = [
+    {
+      id: 'chrome-classic',
+      label: 'Classique',
+      frame: '#dee1e6',
+      toolbar: '#ffffff',
+      page: '#ffffff',
+      tabActive: '#ffffff',
+      text: '#202124',
+      textMuted: '#5f6368',
+      border: '#dadce0',
+    },
+    {
+      id: 'bleu',
+      label: 'Bleu océan',
+      frame: '#c2e7ff',
+      toolbar: '#e8f0fe',
+      page: '#f8fafd',
+      tabActive: '#ffffff',
+      text: '#041e49',
+      textMuted: '#444746',
+      border: '#b8cde4',
+    },
+    {
+      id: 'vert',
+      label: 'Menthe',
+      frame: '#c4eed0',
+      toolbar: '#e6f4ea',
+      page: '#f6fbf7',
+      tabActive: '#ffffff',
+      text: '#072711',
+      textMuted: '#3c4043',
+      border: '#b4dec0',
+    },
+    {
+      id: 'jaune',
+      label: 'Soleil doré',
+      frame: '#feefc3',
+      toolbar: '#fef7e0',
+      page: '#fffdf5',
+      tabActive: '#ffffff',
+      text: '#3c2f00',
+      textMuted: '#5f5332',
+      border: '#ebd79b',
+    },
+    {
+      id: 'rose',
+      label: 'Pivoine',
+      frame: '#fad2cf',
+      toolbar: '#fce8e6',
+      page: '#fff8f7',
+      tabActive: '#ffffff',
+      text: '#410e0b',
+      textMuted: '#5f4341',
+      border: '#e8b8b5',
+    },
+    {
+      id: 'violet',
+      label: 'Lavande',
+      frame: '#e8dff5',
+      toolbar: '#f3e8fd',
+      page: '#faf7fc',
+      tabActive: '#ffffff',
+      text: '#271038',
+      textMuted: '#52435e',
+      border: '#d7c7e8',
+    },
   ];
 
-  const appBg = isDarkMode ? '#121212' : THEMES.find(t => t.id === theme)?.bg || '#ffffff';
-  const themeTextColor = isDarkMode ? '#e5e7eb' : '#1f2937';
-  const [textColor, setTextColor] = useState('#0f172a');
-  const borderColor = isDarkMode ? '#374151' : '#e5e7eb';
-  const menuBg = isDarkMode ? '#1f2937' : '#ffffff';
+  const DARK_THEME = {
+    id: 'dark',
+    label: 'Mode sombre',
+    frame: '#202124',
+    toolbar: '#292a2d',
+    page: '#1f1f1f',
+    tabActive: '#292a2d',
+    text: '#e8eaed',
+    textMuted: '#9aa0a6',
+    border: '#3c4043',
+  };
+
+  const [theme, setTheme] = useState('chrome-classic');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const activeTheme = isDarkMode
+    ? DARK_THEME
+    : CHROME_THEMES.find((t) => t.id === theme) || CHROME_THEMES[0];
+
+  const borderColor = activeTheme.border;
+  const menuBg = activeTheme.toolbar;
+  const [textColor, setTextColor] = useState(activeTheme.text);
+
+  useEffect(() => {
+    setTextColor(activeTheme.text);
+  }, [activeTheme.text]);
   // ----------------------------------------------
   const [saved] = useState<SavedState>(loadSavedState);
   const [folders, setFolders] = useState<Folder[]>(saved.folders);
@@ -1648,10 +1722,12 @@ export default function App() {
   useEffect(() => {
     const el = editorRef.current;
     if (!el) return;
-    el.innerHTML = activeTab?.content ?? '';
+    const initialRaw = activeTab?.content ?? '';
+    const initialHtml = !initialRaw.trim() ? '<p><br></p>' : initialRaw;
+    el.innerHTML = initialHtml;
     const historyKey = `${activeNote?.id}-${activeTab?.id}`;
     if (activeNote && activeTab && !historyRef.current[historyKey]) {
-      historyRef.current[historyKey] = { stack: [{ html: el.innerHTML, caret: 1e9 }], index: 0 };
+      historyRef.current[historyKey] = { stack: [{ html: el.innerHTML, caret: 0 }], index: 0 };
     }
     const onBeforeInput = (ev: Event) => {
       const type = (ev as InputEvent).inputType;
@@ -3010,21 +3086,24 @@ export default function App() {
 
   return (
     <div style={{ 
-      '--app-bg': appBg,
-      '--menu-bg': menuBg,
-      '--text-color': themeTextColor,
-      '--border-color': borderColor,
-      '--hover-bg': isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)',
-      '--active-bg': isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.08)',
+      '--frame-bg': activeTheme.frame,
+      '--toolbar-bg': activeTheme.toolbar,
+      '--tab-active-bg': activeTheme.tabActive,
+      '--page-bg': activeTheme.page,
+      '--text-color': activeTheme.text,
+      '--text-muted': activeTheme.textMuted,
+      '--border-color': activeTheme.border,
+      '--hover-bg': isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+      '--active-bg': isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.10)',
       fontFamily: uiFontFamily,
       display: 'flex', 
       flexDirection: 'column', 
       height: '100vh', 
       width: '100vw', 
       overflow: 'hidden',
-      backgroundColor: 'var(--app-bg)',
-      color: 'var(--text-color)',
-      transition: 'background-color 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.4s ease'
+      backgroundColor: activeTheme.toolbar,
+      color: activeTheme.text,
+      transition: 'background-color 0.25s ease, color 0.25s ease'
     } as React.CSSProperties}>
 
       <input
@@ -3435,7 +3514,7 @@ export default function App() {
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', padding: '0 4px 4px 4px' }}>
-                {THEMES.map(t => {
+                {CHROME_THEMES.map(t => {
                   const isSelected = theme === t.id && !isDarkMode;
                   return (
                     <div 
@@ -3443,34 +3522,34 @@ export default function App() {
                       onClick={() => { setTheme(t.id); setIsDarkMode(false); setActiveTopMenu(null); }}
                       style={{ 
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', 
-                        cursor: 'pointer', padding: '4px', borderRadius: '6px',
-                        background: isSelected ? 'rgba(15,23,42,0.04)' : 'transparent'
+                        cursor: 'pointer', padding: '6px 4px', borderRadius: '8px',
+                        background: isSelected ? 'var(--active-bg)' : 'transparent',
+                        border: isSelected ? '1px solid #3b82f6' : '1px solid transparent'
                       }}
-                      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(15,23,42,0.02)' }}
-                      onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
                     >
-                      {/* La miniature de l'app */}
                       <div style={{ 
                         width: '100%', height: '46px', 
-                        borderRadius: '6px', border: isSelected ? '2px solid #2563eb' : `1px solid #cbd5e1`,
-                        display: 'flex', overflow: 'hidden',
-                        boxShadow: isSelected ? '0 0 0 2px rgba(37,99,235,0.15)' : '0 2px 4px rgba(0,0,0,0.05)'
+                        borderRadius: '6px', border: `1px solid ${t.border}`,
+                        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.06)'
                       }}>
-                        {/* Panneau latéral miniature */}
-                        <div style={{ width: '22px', backgroundColor: '#ffffff', borderRight: `1px solid #e2e8f0` }}>
-                          <div style={{ width: '12px', height: '3px', background: '#cbd5e1', margin: '4px 5px', borderRadius: '2px' }} />
-                          <div style={{ width: '8px', height: '3px', background: '#e2e8f0', margin: '3px 5px', borderRadius: '2px' }} />
+                        {/* Barre de cadre / onglet miniature */}
+                        <div style={{ height: '14px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 4px', gap: '2px' }}>
+                          <div style={{ width: '22px', height: '10px', backgroundColor: t.toolbar, borderRadius: '4px 4px 0 0' }} />
                         </div>
-                        {/* Éditeur miniature */}
-                        <div style={{ flex: 1, backgroundColor: t.bg, display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ height: '8px', borderBottom: `1px solid #e2e8f0`, backgroundColor: 'rgba(255,255,255,0.5)' }} />
-                          <div style={{ padding: '6px 4px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                            <div style={{ width: '80%', height: '3px', background: '#cbd5e1', borderRadius: '2px' }} />
-                            <div style={{ width: '50%', height: '3px', background: '#cbd5e1', borderRadius: '2px', opacity: 0.6 }} />
+                        {/* Barre d'outils + corps */}
+                        <div style={{ flex: 1, backgroundColor: t.toolbar, display: 'flex' }}>
+                          <div style={{ width: '18px', borderRight: `1px solid ${t.border}`, padding: '3px' }}>
+                            <div style={{ width: '10px', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
+                            <div style={{ width: '8px', height: '2px', background: t.border, borderRadius: '1px' }} />
+                          </div>
+                          <div style={{ flex: 1, backgroundColor: t.page, padding: '3px' }}>
+                            <div style={{ width: '80%', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
+                            <div style={{ width: '50%', height: '2px', background: t.border, borderRadius: '1px' }} />
                           </div>
                         </div>
                       </div>
-                      <span style={{ fontSize: '0.68rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? '#0f172a' : '#475569', textAlign: 'center' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center' }}>
                         {t.label}
                       </span>
                     </div>
@@ -4584,21 +4663,28 @@ export default function App() {
                 flex: 1,
                 borderRadius: 0,
                 border: 'none',
-                display: 'block',
+                display: 'flex',
+                flexDirection: 'column',
                 overflowY: 'auto',
                 position: 'relative',
-                background: appBg,
-                transition: 'background 0.3s ease'
+                background: activeTheme.page,
+                cursor: 'text',
+                transition: 'background 0.25s ease'
               }}
               onClick={(e) => {
-                if (e.target === e.currentTarget && editorRef.current) {
+                if (editorRef.current) {
                   editorRef.current.focus();
-                  const sel = window.getSelection();
-                  const range = document.createRange();
-                  range.selectNodeContents(editorRef.current);
-                  range.collapse(false);
-                  sel?.removeAllRanges();
-                  sel?.addRange(range);
+                  if (!editorRef.current.innerHTML.trim()) {
+                    editorRef.current.innerHTML = '<p><br></p>';
+                  }
+                  if (e.target === e.currentTarget) {
+                    const sel = window.getSelection();
+                    const range = document.createRange();
+                    range.selectNodeContents(editorRef.current);
+                    range.collapse(false);
+                    sel?.removeAllRanges();
+                    sel?.addRange(range);
+                  }
                 }
               }}
             >
@@ -4630,13 +4716,15 @@ export default function App() {
                 onMouseUp={checkSelectionFormat}
                 onKeyUp={checkSelectionFormat}
                 style={{
-                  minHeight: '30px',
+                  flex: 1,
+                  minHeight: '100%',
                   padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'normal' ? '40px 64px' : marginSize === 'large' ? '40px 80px' : '40px 100px',
                   outline: 'none',
-                  fontSize: '16px',
+                  fontSize: `${fontSize}px`,
                   zoom: (zoomPercent / 100) * 1.15,
-                  lineHeight: '1.5',
-                  color: '#0f172a',
+                  lineHeight: lineHeight,
+                  color: activeTheme.text,
+                  caretColor: activeTheme.text,
                   textAlign: 'left',
                   direction: 'ltr',
                   fontFamily: "'IBM Plex Sans', sans-serif",
