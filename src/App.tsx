@@ -2996,13 +2996,13 @@ export default function App() {
     borderRadius: 0,
     overflow: 'hidden',
     padding: '16px',
-    borderRight: '1.5px solid rgba(15, 23, 42, 0.12)',
+    borderRight: `1px solid ${borderColor}`,
     display: 'flex',
     flexDirection: 'column',
-    background: 'linear-gradient(135deg, rgba(245,247,250,0.98), rgba(235,240,246,0.98))',
+    background: menuBg,
     willChange: 'transform',
     transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-    transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+    transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s',
     boxShadow: isSidebarOpen ? '8px 0 30px rgba(15, 23, 42, 0.08)' : 'none',
   };
 
@@ -3405,40 +3405,73 @@ export default function App() {
           )}
 
           {activeTopMenu === 'view' && (
-            <>
+            <div style={{ padding: '4px', minWidth: '280px' }}>
               <div className="menu-item" onClick={() => { setIsSidebarOpen(!isSidebarOpen); setActiveTopMenu(null); }}>
                 {isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}
               </div>
-              <div style={{ height: '1px', background: borderColor, margin: '4px 0' }} />
               
-              <div className="menu-item" onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}>
-                {isDarkMode ? 'Désactiver le mode sombre' : 'Activer le mode sombre'}
+              <div style={{ height: '1px', background: borderColor, margin: '8px 0' }} />
+              <div style={{ padding: '0 8px 8px 8px', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
+                Mode sombre
               </div>
               
-              <div style={{ height: '1px', background: borderColor, margin: '4px 0' }} />
-              <div style={{ padding: '4px 12px', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
-                Thème de l'application
+              <div 
+                className="menu-item" 
+                onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}
+                style={{ margin: '0 4px 8px 4px', border: isDarkMode ? '1px solid #3b82f6' : `1px solid ${borderColor}`, background: isDarkMode ? 'rgba(59,130,246,0.1)' : 'transparent' }}
+              >
+                {isDarkMode ? '🌙 Activé' : '☀️ Désactivé'}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', padding: '0 4px' }}>
-                {THEMES.map(t => (
-                  <div 
-                    key={t.id} 
-                    className={`menu-item ${theme === t.id && !isDarkMode ? 'active' : ''}`}
-                    onClick={() => { setTheme(t.id); setIsDarkMode(false); setActiveTopMenu(null); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', padding: '6px' }}
-                  >
-                    <span style={{ 
-                      width: '12px', 
-                      height: '12px', 
-                      backgroundColor: t.bg, 
-                      border: `1px solid ${borderColor}`, 
-                      borderRadius: '2px' 
-                    }}></span>
-                    {t.label}
-                  </div>
-                ))}
+
+              <div style={{ height: '1px', background: borderColor, margin: '8px 0' }} />
+              <div style={{ padding: '0 8px 8px 8px', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
+                Thèmes
               </div>
-            </>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', padding: '0 4px 4px 4px' }}>
+                {THEMES.map(t => {
+                  const isSelected = theme === t.id && !isDarkMode;
+                  return (
+                    <div 
+                      key={t.id} 
+                      onClick={() => { setTheme(t.id); setIsDarkMode(false); setActiveTopMenu(null); }}
+                      style={{ 
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', 
+                        cursor: 'pointer', padding: '4px', borderRadius: '6px',
+                        background: isSelected ? 'rgba(15,23,42,0.04)' : 'transparent'
+                      }}
+                      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(15,23,42,0.02)' }}
+                      onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      {/* La miniature de l'app */}
+                      <div style={{ 
+                        width: '100%', height: '46px', 
+                        borderRadius: '6px', border: isSelected ? '2px solid #2563eb' : `1px solid #cbd5e1`,
+                        display: 'flex', overflow: 'hidden',
+                        boxShadow: isSelected ? '0 0 0 2px rgba(37,99,235,0.15)' : '0 2px 4px rgba(0,0,0,0.05)'
+                      }}>
+                        {/* Panneau latéral miniature */}
+                        <div style={{ width: '22px', backgroundColor: '#ffffff', borderRight: `1px solid #e2e8f0` }}>
+                          <div style={{ width: '12px', height: '3px', background: '#cbd5e1', margin: '4px 5px', borderRadius: '2px' }} />
+                          <div style={{ width: '8px', height: '3px', background: '#e2e8f0', margin: '3px 5px', borderRadius: '2px' }} />
+                        </div>
+                        {/* Éditeur miniature */}
+                        <div style={{ flex: 1, backgroundColor: t.bg, display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ height: '8px', borderBottom: `1px solid #e2e8f0`, backgroundColor: 'rgba(255,255,255,0.5)' }} />
+                          <div style={{ padding: '6px 4px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            <div style={{ width: '80%', height: '3px', background: '#cbd5e1', borderRadius: '2px' }} />
+                            <div style={{ width: '50%', height: '3px', background: '#cbd5e1', borderRadius: '2px', opacity: 0.6 }} />
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? '#0f172a' : '#475569', textAlign: 'center' }}>
+                        {t.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {activeTopMenu === 'insert' && (
@@ -4548,7 +4581,8 @@ export default function App() {
                 display: 'block',
                 overflowY: 'auto',
                 position: 'relative',
-                background: '#ffffff',
+                background: appBg,
+                transition: 'background 0.3s ease'
               }}
               onClick={(e) => {
                 if (e.target === e.currentTarget && editorRef.current) {
