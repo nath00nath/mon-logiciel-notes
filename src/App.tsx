@@ -479,13 +479,13 @@ const GLOBAL_CSS = `
     position: relative; overflow: hidden; flex: 1;
     display: flex; align-items: center; justify-content: center; gap: 6px;
     padding: 9px 12px; border-radius: 11px; cursor: pointer;
-    font-size: 0.8rem; font-weight: 600; color: #1e293b; font-family: inherit;
-    background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.85);
-    box-shadow: 0 2px 6px rgba(30,41,90,0.05);
-    transition: transform 0.25s var(--spring), background 0.2s, box-shadow 0.25s;
+    font-size: 0.8rem; font-weight: 600; color: var(--text-color); font-family: inherit;
+    background: var(--sidebar-card-bg); border: 1px solid var(--sidebar-card-border);
+    box-shadow: 0 2px 6px rgba(15,23,42,0.05);
+    transition: transform 0.25s var(--spring), background 0.2s, box-shadow 0.25s, border-color 0.2s;
   }
   .action-btn svg { display: block; flex-shrink: 0; }
-  .action-btn:hover { background: rgba(255,255,255,0.9); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(30,41,90,0.12); }
+  .action-btn:hover { background: var(--active-bg); transform: translateY(-2px); box-shadow: 0 8px 18px rgba(15,23,42,0.1); }
   .action-btn:active { transform: translateY(0); }
 
   .row {
@@ -493,24 +493,24 @@ const GLOBAL_CSS = `
     border-radius: 11px; width: 100%; border: 1px solid transparent;
     transition: background 0.25s ease, transform 0.3s var(--spring), box-shadow 0.3s ease, border-color 0.25s;
   }
-  .row:hover { background: rgba(255,255,255,0.5); transform: translateX(3px); }
+  .row:hover { background: var(--hover-bg); transform: translateX(3px); }
   .row:active { transform: translateX(3px) scale(0.98); }
   .row.active {
-    background: rgba(15,23,42,0.08);
-    border-color: rgba(15,23,42,0.06);
+    background: var(--active-bg);
+    border-color: var(--border-color);
   }
-  .row.root-note { padding: 9px 11px; font-size: 0.85rem; font-weight: 600; color: #0f172a; }
+  .row.root-note { padding: 9px 11px; font-size: 0.85rem; font-weight: 600; color: var(--text-color); }
   .card {
     display: flex; flex-direction: column; gap: 2px; padding: 4px; flex-shrink: 0;
-    border-radius: 14px; background: rgba(255,255,255,0.45);
-    border: 1px solid rgba(255,255,255,0.8);
-    box-shadow: 0 2px 10px rgba(30,41,90,0.05);
+    border-radius: 14px; background: var(--sidebar-card-bg);
+    border: 1px solid var(--sidebar-card-border);
+    box-shadow: 0 2px 8px rgba(15,23,42,0.04);
     transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   }
-  .card:hover { background: rgba(255,255,255,0.65); }
+  .card:hover { background: var(--hover-bg); }
   .card.current {
-    background: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.95);
-    box-shadow: 0 8px 22px rgba(30,41,90,0.1), inset 0 1px 0 #fff;
+    background: var(--sidebar-card-active); border-color: var(--sidebar-card-border);
+    box-shadow: 0 6px 16px rgba(15,23,42,0.08);
   }
   .row.folder { padding: 9px 11px; justify-content: space-between; font-weight: 650; font-size: 0.86rem; color: #0f172a; }
   .row.note { padding: 8px 11px; font-size: 0.83rem; color: #334155; }
@@ -586,13 +586,25 @@ const GLOBAL_CSS = `
 
   .brand-word {
     font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
-    font-style: normal; font-weight: 700; font-size: 1.55rem; line-height: 1;
-    letter-spacing: 0.04em; color: var(--text-color); padding: 0 2px;
+    font-style: normal; font-weight: 700; font-size: 1.55rem; line-height: 1.15;
+    letter-spacing: 0.04em; padding: 2px 4px;
     display: block; position: relative;
     text-transform: lowercase;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+    background: var(--brand-shimmer);
+    background-size: 260% 100%;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none !important;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.12));
     transition: filter 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     transform: translateY(0) scale(1);
+  }
+  .brand:hover .brand-word {
+    animation: textShimmer 2.4s ease-in-out infinite;
+    transform: translateY(-2px) scale(1.035);
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
   }
   .brand:hover .brand-word {
     animation: textShimmer 2.4s ease-in-out infinite;
@@ -850,8 +862,8 @@ const GLOBAL_CSS = `
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeSpeed;
-    cursor: text !important;
-    caret-color: var(--text-color) !important;
+    cursor: var(--editor-cursor, text) !important;
+    caret-color: var(--caret-custom-color, var(--text-color)) !important;
     min-height: 100%;
   }
   .note-editor:empty::before,
@@ -1144,7 +1156,20 @@ const computeSplit = (widths: number[], c: number, n: number) => {
 };
 
 export default function App() {
-  // --- PLEIN ÉCRAN + 20 THÈMES GOOGLE CHROME + MODE SOMBRE ---
+  // --- CUSTOMISATION DU CURSEUR + PLEIN ÉCRAN + 20 THÈMES GOOGLE CHROME ---
+  const [caretColorChoice, setCaretColorChoice] = useState<string>('auto');
+  const [cursorStyleChoice, setCursorStyleChoice] = useState<'text' | 'default' | 'crosshair' | 'pointer'>('text');
+
+  const CARET_COLORS = [
+    { id: 'auto', label: 'Auto', color: 'auto' },
+    { id: 'blue', label: 'Bleu', color: '#2563eb' },
+    { id: 'violet', label: 'Violet', color: '#7c3aed' },
+    { id: 'rose', label: 'Rose', color: '#ec4899' },
+    { id: 'amber', label: 'Or', color: '#f59e0b' },
+    { id: 'emerald', label: 'Vert', color: '#10b981' },
+    { id: 'red', label: 'Rouge', color: '#ef4444' },
+  ];
+
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -3090,6 +3115,7 @@ export default function App() {
   };
 
   const isDarkThemeActive = isDarkMode || ['bleu-ardoise', 'vert-foret', 'indigo-nuit', 'carbone-oled'].includes(activeTheme.id);
+  const resolvedCaretColor = caretColorChoice === 'auto' ? activeTheme.text : caretColorChoice;
 
   return (
     <div style={{ 
@@ -3101,11 +3127,19 @@ export default function App() {
       '--text-color': activeTheme.text,
       '--text-muted': activeTheme.textMuted,
       '--border-color': activeTheme.border,
-      '--btn-bg': isDarkThemeActive ? 'rgba(255,255,255,0.07)' : activeTheme.id === 'chrome-classic' ? '#ffffff' : 'rgba(255,255,255,0.75)',
+      '--caret-custom-color': resolvedCaretColor,
+      '--editor-cursor': cursorStyleChoice,
+      '--brand-shimmer': isDarkThemeActive
+        ? 'linear-gradient(115deg, #f1f5f9 0%, #f1f5f9 38%, #38bdf8 48%, #ffffff 52%, #f1f5f9 62%, #f1f5f9 100%)'
+        : 'linear-gradient(115deg, #334155 0%, #334155 38%, #ffffff 48%, #93c5fd 52%, #334155 62%, #334155 100%)',
+      '--sidebar-card-bg': isDarkThemeActive ? 'rgba(255,255,255,0.06)' : activeTheme.id === 'chrome-classic' ? '#f1f5f9' : 'rgba(255,255,255,0.65)',
+      '--sidebar-card-active': isDarkThemeActive ? 'rgba(255,255,255,0.12)' : activeTheme.id === 'chrome-classic' ? '#e2e8f0' : 'rgba(255,255,255,0.9)',
+      '--sidebar-card-border': isDarkThemeActive ? 'rgba(255,255,255,0.14)' : activeTheme.id === 'chrome-classic' ? '#cbd5e1' : activeTheme.border,
+      '--btn-bg': isDarkThemeActive ? 'rgba(255,255,255,0.07)' : activeTheme.id === 'chrome-classic' ? '#f8fafc' : 'rgba(255,255,255,0.75)',
       '--btn-hover-bg': isDarkThemeActive ? 'rgba(255,255,255,0.14)' : '#ffffff',
       '--btn-border': isDarkThemeActive ? 'rgba(255,255,255,0.16)' : activeTheme.id === 'chrome-classic' ? '#cbd5e1' : activeTheme.border,
-      '--hover-bg': isDarkThemeActive ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.04)',
-      '--active-bg': isDarkThemeActive ? 'rgba(255,255,255,0.16)' : 'rgba(15,23,42,0.09)',
+      '--hover-bg': isDarkThemeActive ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.05)',
+      '--active-bg': isDarkThemeActive ? 'rgba(255,255,255,0.16)' : 'rgba(15,23,42,0.10)',
       fontFamily: uiFontFamily,
       display: 'flex', 
       flexDirection: 'column', 
@@ -3500,35 +3534,93 @@ export default function App() {
                 <span>F11</span>
               </div>
               
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
-              <div style={{ textAlign: 'center', padding: '0 8px 6px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                Mode sombre
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 8px' }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)' }}>Mode sombre</span>
                 <div 
                   className="menu-item" 
                   onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}
                   style={{ 
                     width: 'fit-content',
-                    padding: '6px 14px',
+                    padding: '4px 12px',
                     borderRadius: '20px',
                     border: isDarkMode ? '1px solid #3b82f6' : `1px solid var(--border-color)`, 
                     background: isDarkMode ? 'rgba(59,130,246,0.15)' : 'var(--hover-bg)' 
                   }}
                 >
                   {isDarkMode ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontWeight: 600 }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-color)', fontWeight: 600, fontSize: '0.78rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                       Activé
                     </span>
                   ) : (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontWeight: 600 }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-color)', fontWeight: 600, fontSize: '0.78rem' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                       Désactivé
                     </span>
                   )}
                 </div>
+              </div>
+
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
+              <div style={{ padding: '0 8px 4px 8px', fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Curseur (Couleur & Style)</span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {(['text', 'default', 'crosshair'] as const).map((cs) => (
+                    <button
+                      key={cs}
+                      onClick={() => setCursorStyleChoice(cs)}
+                      style={{
+                        padding: '2px 7px',
+                        fontSize: '0.68rem',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        border: cursorStyleChoice === cs ? '1px solid #3b82f6' : '1px solid var(--border-color)',
+                        background: cursorStyleChoice === cs ? 'var(--active-bg)' : 'var(--hover-bg)',
+                        color: 'var(--text-color)',
+                        fontWeight: cursorStyleChoice === cs ? 700 : 500,
+                      }}
+                    >
+                      {cs === 'text' ? 'I-Beam' : cs === 'default' ? 'Flèche' : 'Précision'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 8px 4px 8px', gap: '6px' }}>
+                {CARET_COLORS.map((cc) => {
+                  const isSel = caretColorChoice === cc.color;
+                  return (
+                    <div
+                      key={cc.id}
+                      onClick={() => setCaretColorChoice(cc.color)}
+                      title={`Curseur : ${cc.label}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '3px 7px',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        fontSize: '0.68rem',
+                        fontWeight: isSel ? 700 : 500,
+                        color: 'var(--text-color)',
+                        background: isSel ? 'var(--active-bg)' : 'var(--hover-bg)',
+                        border: isSel ? '1px solid #3b82f6' : '1px solid var(--border-color)',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: cc.color === 'auto' ? activeTheme.text : cc.color,
+                          display: 'inline-block',
+                        }}
+                      />
+                      <span>{cc.label}</span>
+                    </div>
+                  );
+                })}
               </div>
 
               <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
@@ -4762,7 +4854,7 @@ export default function App() {
                   zoom: (zoomPercent / 100) * 1.15,
                   lineHeight: lineHeight,
                   color: activeTheme.text,
-                  caretColor: activeTheme.text,
+                  caretColor: resolvedCaretColor,
                   textAlign: 'left',
                   direction: 'ltr',
                   fontFamily: "'IBM Plex Sans', sans-serif",
