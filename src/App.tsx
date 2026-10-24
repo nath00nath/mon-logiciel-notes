@@ -1017,16 +1017,14 @@ const GLOBAL_CSS = `
     }
   }
 
-  /* --- Effet rétro / pixellisé fluide sur la frappe --- */
+  /* --- Effet rétro / pixellisé fluide sur la frappe (Corrigé) --- */
   @keyframes retroTypeEffect {
     0% {
-      filter: blur(3px) contrast(250%);
-      transform: translateY(2px) scale(0.98);
-      opacity: 0.4;
+      filter: blur(0.5px) contrast(120%);
+      opacity: 0.85;
     }
     100% {
       filter: blur(0px) contrast(100%);
-      transform: translateY(0) scale(1);
       opacity: 1;
     }
   }
@@ -4952,7 +4950,7 @@ export default function App() {
               <div
                 key={activeTab ? `${activeNote?.id}-${activeTab.id}` : 'none'}
                 ref={editorRef}
-                className={`note-editor ${isTypingCaret ? 'is-typing-effect' : ''}`}
+                className="note-editor"
                 contentEditable={!!activeTab}
                 suppressContentEditableWarning
                 onContextMenu={handleEditorContextMenu}
