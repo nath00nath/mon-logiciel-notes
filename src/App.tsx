@@ -857,19 +857,29 @@ const GLOBAL_CSS = `
   @keyframes noteIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes btnPop { 0% { transform: scale(0.85); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
+  /* Curseurs de texte personnalisés - Machine à écrire large (block) et effet wavy/smooth */
   .note-editor {
     animation: noteIn 0.4s var(--ease);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeSpeed;
-    cursor: var(--editor-cursor, text) !important;
-    caret-color: var(--caret-custom-color, var(--text-color)) !important;
-    caret-shape: var(--caret-shape-val, auto) !important;
+    cursor: text !important;
+    caret-color: var(--text-color) !important;
+    caret-shape: block !important;
     min-height: 100%;
+    transition: caret-color 0.3s ease;
   }
-  /* Styles personnalisés pour le curseur (épaisseur, machine à écrire, etc.) */
-  .note-editor[style*="caret-width: 3px"] { caret-width: 3px; }
-  .note-editor[style*="caret-width: 6px"] { caret-width: 6px; }
+
+  /* Animation wavy subtile et fluide sur l'apparition des nouveaux caractères tapés */
+  @keyframes charWavy {
+    0% { transform: translateY(3px) scale(0.96); opacity: 0.4; }
+    60% { transform: translateY(-1px) scale(1.02); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .note-editor span.new-char, .note-editor *:not(:has(*)) {
+    animation: none;
+  }
+
   .note-editor:empty::before,
   .note-editor p:empty::before {
     content: '';
@@ -3529,7 +3539,7 @@ export default function App() {
           )}
 
           {activeTopMenu === 'view' && (
-            <div style={{ padding: '8px', width: '380px', boxSizing: 'border-box', overflow: 'hidden' }}>
+            <div style={{ padding: '8px', width: '300px', boxSizing: 'border-box' }}>
               <div className="menu-item" onClick={() => { setIsSidebarOpen(!isSidebarOpen); setActiveTopMenu(null); }}>
                 <span>{isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}</span>
               </div>
@@ -3545,112 +3555,17 @@ export default function App() {
                   className="menu-item" 
                   onClick={() => { setIsDarkMode(!isDarkMode); setActiveTopMenu(null); }}
                   style={{ 
-                    width: 'fit-content',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
+                    width: 'fit-content', padding: '4px 12px', borderRadius: '20px',
                     border: isDarkMode ? '1px solid #3b82f6' : `1px solid var(--border-color)`, 
                     background: isDarkMode ? 'rgba(59,130,246,0.15)' : 'var(--hover-bg)' 
                   }}
                 >
-                  {isDarkMode ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-color)', fontWeight: 600, fontSize: '0.78rem' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                      Activé
-                    </span>
-                  ) : (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-color)', fontWeight: 600, fontSize: '0.78rem' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                      Désactivé
-                    </span>
-                  )}
+                  {isDarkMode ? 'Activé' : 'Désactivé'}
                 </div>
               </div>
 
               <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
-              
-              {/* Titre Curseur centré */}
-              <div style={{ textAlign: 'center', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-color)', marginBottom: '6px' }}>
-                Curseur
-              </div>
-
-              {/* Options de style du curseur sur 2 lignes */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', padding: '0 4px 4px 4px' }}>
-                {[
-                  { id: 'text', label: 'Fin (I-Beam)' },
-                  { id: 'thick', label: 'Épais (Thick)' },
-                  { id: 'block', label: 'Machine à écrire' },
-                  { id: 'default', label: 'Flèche' },
-                  { id: 'crosshair', label: 'Précision' },
-                  { id: 'pointer', label: 'Main' },
-                ].map((st) => {
-                  const isSel = cursorStyleChoice === st.id;
-                  return (
-                    <button
-                      key={st.id}
-                      onClick={() => setCursorStyleChoice(st.id as any)}
-                      style={{
-                        padding: '4px 6px',
-                        fontSize: '0.68rem',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        border: isSel ? '1px solid #3b82f6' : '1px solid var(--border-color)',
-                        background: isSel ? 'var(--active-bg)' : 'var(--hover-bg)',
-                        color: 'var(--text-color)',
-                        fontWeight: isSel ? 700 : 500,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {st.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Options de couleur du curseur sur 2 lignes */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', padding: '0 4px 6px 4px' }}>
-                {CARET_COLORS.map((cc) => {
-                  const isSel = caretColorChoice === cc.color;
-                  return (
-                    <div
-                      key={cc.id}
-                      onClick={() => setCaretColorChoice(cc.color)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '4px',
-                        padding: '4px 6px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '0.68rem',
-                        fontWeight: isSel ? 700 : 500,
-                        color: 'var(--text-color)',
-                        background: isSel ? 'var(--active-bg)' : 'var(--hover-bg)',
-                        border: isSel ? '1px solid #3b82f6' : '1px solid var(--border-color)',
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          background: cc.color === 'auto' ? activeTheme.text : cc.color,
-                          display: 'inline-block',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cc.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
-              
-              {/* Titre Thèmes centré */}
-              <div style={{ textAlign: 'center', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-color)', marginBottom: '6px' }}>
-                Thèmes
-              </div>
+              <div style={{ textAlign: 'center', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-color)', marginBottom: '6px' }}>Thèmes</div>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', width: '100%', boxSizing: 'border-box' }}>
                 {CHROME_THEMES.map(t => {
@@ -3664,30 +3579,17 @@ export default function App() {
                         cursor: 'pointer', padding: '4px', borderRadius: '6px', boxSizing: 'border-box',
                         background: isSelected ? 'var(--active-bg)' : 'transparent',
                         border: isSelected ? '1.5px solid #3b82f6' : '1.5px solid transparent',
-                        width: '100%', minWidth: 0
+                        width: '100%'
                       }}
                     >
                       <div style={{ 
-                        width: '100%', height: '36px', 
-                        borderRadius: '5px', border: `1px solid ${t.border}`,
-                        display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)', boxSizing: 'border-box'
+                        width: '100%', height: '36px', borderRadius: '5px', border: `1px solid ${t.border}`,
+                        display: 'flex', flexDirection: 'column', overflow: 'hidden', boxSizing: 'border-box'
                       }}>
-                        <div style={{ height: '11px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 2px', gap: '2px' }}>
-                          <div style={{ width: '16px', height: '8px', backgroundColor: t.toolbar, borderRadius: '2px 2px 0 0' }} />
-                        </div>
-                        <div style={{ flex: 1, backgroundColor: t.toolbar, display: 'flex' }}>
-                          <div style={{ width: '12px', borderRight: `1px solid ${t.border}`, padding: '2px' }}>
-                            <div style={{ width: '6px', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
-                            <div style={{ width: '4px', height: '2px', background: t.border, borderRadius: '1px' }} />
-                          </div>
-                          <div style={{ flex: 1, backgroundColor: t.page, padding: '2px' }}>
-                            <div style={{ width: '75%', height: '2px', background: t.border, borderRadius: '1px', marginBottom: '2px' }} />
-                            <div style={{ width: '40%', height: '2px', background: t.border, borderRadius: '1px' }} />
-                          </div>
-                        </div>
+                        <div style={{ height: '11px', backgroundColor: t.frame }} />
+                        <div style={{ flex: 1, backgroundColor: t.toolbar }} />
                       </div>
-                      <span style={{ fontSize: '0.62rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'block' }}>
+                      <span style={{ fontSize: '0.62rem', fontWeight: isSelected ? 700 : 500, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                         {t.label}
                       </span>
                     </div>
