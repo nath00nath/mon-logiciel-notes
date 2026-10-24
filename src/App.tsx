@@ -857,20 +857,18 @@ const GLOBAL_CSS = `
   @keyframes noteIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes btnPop { 0% { transform: scale(0.85); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
-  /* --- Curseur Dynamique --- */
+  /* --- Curseur Standard & Fluide --- */
   .note-editor {
     animation: noteIn 0.4s var(--ease);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeSpeed;
     cursor: text !important;
-    caret-color: var(--text-color) !important; /* Couleur dynamique */
-    caret-shape: block; /* Bloc sur les navigateurs qui le supportent */
+    caret-color: var(--text-color) !important; /* Le curseur prend la couleur du thème */
     min-height: 100%;
     outline: none;
     transition: caret-color 0.3s ease, color 0.3s ease;
   }
-
   /* L'animation quand on écrit (léger sursaut/pulse de la zone de texte) */
   @keyframes typePulse {
     0% { transform: scale(1); }
