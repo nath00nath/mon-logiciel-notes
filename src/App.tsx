@@ -3525,7 +3525,7 @@ export default function App() {
           )}
 
           {activeTopMenu === 'view' && (
-            <div style={{ padding: '10px', width: '520px', boxSizing: 'border-box', overflow: 'hidden' }}>
+            <div style={{ padding: '10px 14px', width: '600px', boxSizing: 'border-box', overflow: 'hidden' }}>
               <div className="menu-item" onClick={() => { setIsSidebarOpen(!isSidebarOpen); setActiveTopMenu(null); }}>
                 <span>{isSidebarOpen ? 'Masquer le panneau latéral' : 'Afficher le panneau latéral'}</span>
               </div>
@@ -3534,8 +3534,8 @@ export default function App() {
                 <span>F11</span>
               </div>
               
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px' }}>
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 8px' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Mode sombre</span>
                 <div 
                   className="menu-item" 
@@ -3562,13 +3562,13 @@ export default function App() {
                 </div>
               </div>
 
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '6px 0' }} />
               
-              <div style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-color)', marginBottom: '8px' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-color)', marginBottom: '6px' }}>
                 Thèmes
               </div>
               
-              <div className="scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', width: '100%', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px', boxSizing: 'border-box' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', width: '100%', overflow: 'hidden', boxSizing: 'border-box' }}>
                 {CHROME_THEMES.map(t => {
                   const isSelected = theme === t.id && !isDarkMode;
                   return (
@@ -3576,49 +3576,47 @@ export default function App() {
                       key={t.id} 
                       onClick={() => { setTheme(t.id); setIsDarkMode(false); setActiveTopMenu(null); }}
                       style={{ 
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', 
-                        cursor: 'pointer', padding: '6px', borderRadius: '8px', boxSizing: 'border-box',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', 
+                        cursor: 'pointer', padding: '4px', borderRadius: '8px', boxSizing: 'border-box',
                         background: isSelected ? 'var(--active-bg)' : 'transparent',
                         border: isSelected ? '2px solid #3b82f6' : '1px solid transparent',
                         width: '100%', minWidth: 0
                       }}
                     >
                       <div style={{ 
-                        width: '100%', height: '58px', 
-                        borderRadius: '7px', border: `1px solid ${t.border}`,
+                        width: '100%', height: '44px', 
+                        borderRadius: '6px', border: `1px solid ${t.border}`,
                         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.12)', boxSizing: 'border-box'
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)', boxSizing: 'border-box'
                       }}>
                         {/* Barre du haut (En-tête / Onglet) */}
-                        <div style={{ height: '16px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 4px', gap: '3px' }}>
-                          <div style={{ width: '32px', height: '12px', backgroundColor: t.toolbar, borderRadius: '3px 3px 0 0', display: 'flex', alignItems: 'center', padding: '0 3px' }}>
-                            <div style={{ width: '12px', height: '2px', background: t.text, opacity: 0.6, borderRadius: '1px' }} />
+                        <div style={{ height: '13px', backgroundColor: t.frame, display: 'flex', alignItems: 'flex-end', padding: '0 3px', gap: '2px' }}>
+                          <div style={{ width: '26px', height: '9px', backgroundColor: t.toolbar, borderRadius: '2px 2px 0 0', display: 'flex', alignItems: 'center', padding: '0 2px' }}>
+                            <div style={{ width: '10px', height: '2px', background: t.text, opacity: 0.6, borderRadius: '1px' }} />
                           </div>
                         </div>
                         {/* Zone principale : Barre d'outils + Panneau latéral + Éditeur */}
                         <div style={{ flex: 1, backgroundColor: t.toolbar, display: 'flex', flexDirection: 'column' }}>
                           {/* Barre d'outils */}
-                          <div style={{ height: '8px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', padding: '0 4px', gap: '4px' }}>
-                            <div style={{ width: '10px', height: '3px', background: t.text, opacity: 0.5, borderRadius: '1px' }} />
-                            <div style={{ width: '14px', height: '3px', background: t.text, opacity: 0.5, borderRadius: '1px' }} />
-                            <div style={{ width: '8px', height: '3px', background: t.text, opacity: 0.5, borderRadius: '1px' }} />
+                          <div style={{ height: '6px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', padding: '0 3px', gap: '3px' }}>
+                            <div style={{ width: '8px', height: '2px', background: t.text, opacity: 0.5, borderRadius: '1px' }} />
+                            <div style={{ width: '11px', height: '2px', background: t.text, opacity: 0.5, borderRadius: '1px' }} />
+                            <div style={{ width: '6px', height: '2px', background: t.text, opacity: 0.5, borderRadius: '1px' }} />
                           </div>
                           {/* Contenu : Panneau latéral & Feuille */}
                           <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                            <div style={{ width: '32px', borderRight: `1px solid ${t.border}`, padding: '4px 3px', display: 'flex', flexDirection: 'column', gap: '3px', backgroundColor: t.toolbar }}>
-                              <div style={{ width: '100%', height: '3px', background: t.text, opacity: 0.35, borderRadius: '1px' }} />
-                              <div style={{ width: '70%', height: '3px', background: t.text, opacity: 0.25, borderRadius: '1px' }} />
-                              <div style={{ width: '85%', height: '3px', background: t.text, opacity: 0.25, borderRadius: '1px' }} />
+                            <div style={{ width: '24px', borderRight: `1px solid ${t.border}`, padding: '3px 2px', display: 'flex', flexDirection: 'column', gap: '2px', backgroundColor: t.toolbar }}>
+                              <div style={{ width: '100%', height: '2px', background: t.text, opacity: 0.35, borderRadius: '1px' }} />
+                              <div style={{ width: '70%', height: '2px', background: t.text, opacity: 0.25, borderRadius: '1px' }} />
                             </div>
-                            <div style={{ flex: 1, backgroundColor: t.page, padding: '4px 6px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                              <div style={{ width: '80%', height: '3.5px', background: t.text, opacity: 0.7, borderRadius: '1px' }} />
-                              <div style={{ width: '50%', height: '3px', background: t.text, opacity: 0.4, borderRadius: '1px' }} />
-                              <div style={{ width: '90%', height: '3px', background: t.text, opacity: 0.4, borderRadius: '1px' }} />
+                            <div style={{ flex: 1, backgroundColor: t.page, padding: '3px 4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <div style={{ width: '80%', height: '2.5px', background: t.text, opacity: 0.7, borderRadius: '1px' }} />
+                              <div style={{ width: '50%', height: '2px', background: t.text, opacity: 0.4, borderRadius: '1px' }} />
                             </div>
                           </div>
                         </div>
                       </div>
-                      <span style={{ fontSize: '0.72rem', fontWeight: isSelected ? 700 : 600, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'block' }}>
+                      <span style={{ fontSize: '0.66rem', fontWeight: isSelected ? 700 : 600, color: 'var(--text-color)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', display: 'block' }}>
                         {t.label}
                       </span>
                     </div>
