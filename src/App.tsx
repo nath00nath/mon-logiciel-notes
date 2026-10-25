@@ -2256,49 +2256,50 @@ export default function App() {
 
     const range = sel.getRangeAt(0);
 
-    if (range.collapsed) {
-      let node: Node | null = range.startContainer;
-      if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
-      
-      // Remonter jusqu'au bloc de base pour forcer la taille du curseur sur tout l'élément
-      let blockNode = node;
-      while (blockNode && blockNode !== ed && !['P', 'DIV', 'H1', 'H2', 'H3', 'LI', 'TD', 'TH'].includes((blockNode as HTMLElement).tagName)) {
-        blockNode = blockNode.parentNode;
+    // Fonction pour trouver le bloc parent (H1, P, etc.)
+    const getBlock = (node: Node | null) => {
+      let n = node;
+      if (n && n.nodeType === Node.TEXT_NODE) n = n.parentNode;
+      while (n && n !== ed && !['P', 'DIV', 'H1', 'H2', 'H3', 'LI', 'TD', 'TH'].includes((n as HTMLElement).tagName)) {
+        n = n.parentNode;
       }
+      return (n && n !== ed) ? (n as HTMLElement) : null;
+    };
 
-      if (blockNode && blockNode instanceof HTMLElement && blockNode !== ed) {
-        blockNode.style.fontSize = `${targetPx}px`;
-        
-        // Si on est sur une ligne vide, on s'assure qu'aucun <span> enfant ne garde une ancienne taille
-        if (blockNode.textContent?.trim() === '') {
-           blockNode.querySelectorAll('span').forEach(s => s.style.removeProperty('font-size'));
+    const startBlock = getBlock(range.startContainer);
+    const endBlock = getBlock(range.endContainer);
+
+    // Applique la taille directement aux blocs concernés au lieu de créer des spans
+    const blocksToStyle = new Set<HTMLElement>();
+    
+    if (startBlock) blocksToStyle.add(startBlock);
+    if (endBlock) blocksToStyle.add(endBlock);
+
+    // Si la sélection traverse plusieurs blocs, on les récupère tous
+    if (startBlock !== endBlock) {
+      const common = range.commonAncestorContainer;
+      const walker = document.createTreeWalker(common, NodeFilter.SHOW_ELEMENT);
+      let curr = walker.nextNode();
+      while (curr) {
+        if (['P', 'DIV', 'H1', 'H2', 'H3', 'LI', 'TD', 'TH'].includes((curr as HTMLElement).tagName)) {
+          if (sel.containsNode(curr, true)) {
+            blocksToStyle.add(curr as HTMLElement);
+          }
         }
-      } else if (node && node instanceof HTMLElement && node !== ed) {
-        node.style.fontSize = `${targetPx}px`;
-      } else {
-        const span = document.createElement('span');
-        span.style.fontSize = `${targetPx}px`;
-        span.innerHTML = '&#8203;';
-        range.insertNode(span);
-        const newR = document.createRange();
-        newR.setStart(span, 1);
-        newR.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(newR);
-        savedRangeRef.current = newR.cloneRange();
+        curr = walker.nextNode();
       }
-    } else {
-      const span = document.createElement('span');
-      span.style.fontSize = `${targetPx}px`;
-      span.appendChild(range.extractContents());
-      range.insertNode(span);
-
-      const newRange = document.createRange();
-      newRange.selectNodeContents(span);
-      sel.removeAllRanges();
-      sel.addRange(newRange);
-      savedRangeRef.current = newRange.cloneRange();
     }
+
+    blocksToStyle.forEach(block => {
+      // Force la taille exacte sur le conteneur pour calibrer le curseur
+      block.style.fontSize = `${targetPx}px`;
+      
+      // Nettoie les anciens spans internes pour éviter les conflits
+      block.querySelectorAll('span').forEach(s => {
+        s.style.removeProperty('font-size');
+        if (!s.getAttribute('style')) s.removeAttribute('style');
+      });
+    });
 
     setFontSize(targetPx);
     handleContentChange();
