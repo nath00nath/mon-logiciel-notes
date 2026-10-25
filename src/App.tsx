@@ -880,6 +880,10 @@ const GLOBAL_CSS = `
     display: block;
     color: var(--text-color);
   }
+  .note-editor p, .note-editor div { font-size: 16px; }
+  .note-editor h1 { font-size: 28px; }
+  .note-editor h2 { font-size: 22px; }
+  .note-editor h3 { font-size: 18px; }
   .note-editor blockquote { margin: 0.6em 0; padding: 0.3em 1em; border-left: 3px solid #94a3b8; color: #475569; background: rgba(255,255,255,0.4); border-radius: 0 10px 10px 0; }
   .note-editor ul { padding-left: 1.5em; }
   .note-editor a { color: #1e293b; }
@@ -2255,53 +2259,57 @@ export default function App() {
     if (!ed || !sel || sel.rangeCount === 0) return;
 
     const range = sel.getRangeAt(0);
+    const BLOCK_TAGS = ['P', 'DIV', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'LI', 'TD', 'TH'];
 
-    // Fonction pour trouver le bloc parent (H1, P, etc.)
-    const getBlock = (node: Node | null) => {
+    const getBlock = (node: Node | null): HTMLElement | null => {
       let n = node;
       if (n && n.nodeType === Node.TEXT_NODE) n = n.parentNode;
-      while (n && n !== ed && !['P', 'DIV', 'H1', 'H2', 'H3', 'LI', 'TD', 'TH'].includes((n as HTMLElement).tagName)) {
+      while (n && n !== ed && !BLOCK_TAGS.includes((n as HTMLElement).tagName)) {
         n = n.parentNode;
       }
-      return (n && n !== ed) ? (n as HTMLElement) : null;
+      return n && n !== ed ? (n as HTMLElement) : null;
     };
 
+    const blocksToStyle = new Set<HTMLElement>();
     const startBlock = getBlock(range.startContainer);
     const endBlock = getBlock(range.endContainer);
 
-    // Applique la taille directement aux blocs concernés au lieu de créer des spans
-    const blocksToStyle = new Set<HTMLElement>();
-    
     if (startBlock) blocksToStyle.add(startBlock);
     if (endBlock) blocksToStyle.add(endBlock);
 
-    // Si la sélection traverse plusieurs blocs, on les récupère tous
-    if (startBlock !== endBlock) {
-      const common = range.commonAncestorContainer;
-      const walker = document.createTreeWalker(common, NodeFilter.SHOW_ELEMENT);
-      let curr = walker.nextNode();
-      while (curr) {
-        if (['P', 'DIV', 'H1', 'H2', 'H3', 'LI', 'TD', 'TH'].includes((curr as HTMLElement).tagName)) {
-          if (sel.containsNode(curr, true)) {
-            blocksToStyle.add(curr as HTMLElement);
-          }
-        }
-        curr = walker.nextNode();
-      }
+    // Si aucun bloc n'existe (texte directement à la racine de l'éditeur), on l'enveloppe dans un <p>
+    if (blocksToStyle.size === 0) {
+      document.execCommand('formatBlock', false, 'p');
+      const newBlock = getBlock(sel.anchorNode);
+      if (newBlock) blocksToStyle.add(newBlock);
     }
 
-    blocksToStyle.forEach(block => {
-      // Force la taille exacte sur le conteneur pour calibrer le curseur
+    // Récupère tous les blocs traversés par la sélection
+    Array.from(ed.querySelectorAll<HTMLElement>(BLOCK_TAGS.join(','))).forEach((b) => {
+      if (sel.containsNode(b, true)) {
+        blocksToStyle.add(b);
+      }
+    });
+
+    blocksToStyle.forEach((block) => {
+      // 1. Applique la taille exacte sur le bloc lui-même (calibre la hauteur du curseur)
       block.style.fontSize = `${targetPx}px`;
-      
-      // Nettoie les anciens spans internes pour éviter les conflits
-      block.querySelectorAll('span').forEach(s => {
-        s.style.removeProperty('font-size');
-        if (!s.getAttribute('style')) s.removeAttribute('style');
+
+      // 2. Supprime tout font-size ou line-height parasite sur TOUS les éléments enfants (span, b, i, u, font...)
+      block.querySelectorAll<HTMLElement>('*').forEach((child) => {
+        if (!BLOCK_TAGS.includes(child.tagName)) {
+          child.style.removeProperty('font-size');
+          child.style.removeProperty('line-height');
+          if (child.tagName === 'FONT') child.removeAttribute('size');
+          if (child.getAttribute('style')?.trim() === '') {
+            child.removeAttribute('style');
+          }
+        }
       });
     });
 
     setFontSize(targetPx);
+    saveCurrentSelection();
     handleContentChange();
   };
 
@@ -4856,7 +4864,7 @@ export default function App() {
                   minHeight: '100%',
                   padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'normal' ? '40px 64px' : marginSize === 'large' ? '40px 80px' : '40px 100px',
                   outline: 'none',
-                  fontSize: `${fontSize}px`,
+                  fontSize: `${EDITOR_FONT_SIZE}px`,
                   zoom: (zoomPercent / 100) * 1.15,
                   lineHeight: lineHeight,
                   color: activeTheme.text,
