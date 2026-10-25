@@ -1527,7 +1527,6 @@ export default function App() {
   const [currentFontLabel, setCurrentFontLabel] = useState<string>('IBM Plex Sans');
   const [lineHeight, setLineHeight] = useState<string>('1.5');
   const [zoomPercent, setZoomPercent] = useState<number>(100);
-  const [marginSize, setMarginSize] = useState<'normal' | 'large' | 'etroit' | 'tres_large'>('tres_large');
 
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
@@ -4022,35 +4021,6 @@ export default function App() {
               ))}
             </>
           )}
-
-          {dropdown.kind === 'margin' && (
-            <>
-              <div
-                className={`menu-item${marginSize === 'etroit' ? ' active' : ''}`}
-                onClick={() => { setMarginSize('etroit'); setDropdown(null); }}
-              >
-                Étroites (24px)
-              </div>
-              <div
-                className={`menu-item${marginSize === 'normal' ? ' active' : ''}`}
-                onClick={() => { setMarginSize('normal'); setDropdown(null); }}
-              >
-                Normales (40px)
-              </div>
-              <div
-                className={`menu-item${marginSize === 'large' ? ' active' : ''}`}
-                onClick={() => { setMarginSize('large'); setDropdown(null); }}
-              >
-                Larges (80px)
-              </div>
-              <div
-                className={`menu-item${marginSize === 'tres_large' ? ' active' : ''}`}
-                onClick={() => { setMarginSize('tres_large'); setDropdown(null); }}
-              >
-                Très larges (100px)
-              </div>
-            </>
-          )}
         </div>
       )}
 
@@ -4728,16 +4698,6 @@ export default function App() {
                   transition: 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s linear',
                 }}
               >
-                <button
-                  className="tb-custom-trigger"
-                  style={{ minWidth: '75px', padding: '0 7px', gap: '4px', flexShrink: 0 }}
-                  onClick={(e) => openDropdown(e, 'margin')}
-                  title="Marges de la page"
-                >
-                  <span>Marges</span>
-                  <span className={`tool-arrow${dropdown?.kind === 'margin' ? ' open' : ''}`}>▾</span>
-                </button>
-                <div className="tb-sep" style={{ margin: '0 2px', flexShrink: 0 }} />
                 <button className="tb-btn" style={{ flexShrink: 0 }} onMouseDown={(e) => { e.preventDefault(); editorRef.current?.focus(); handleInsertLink(e); }} title="Insérer un lien">🔗</button>
                 <button 
                   className={`tb-btn${isBulletList ? ' on' : ''}`} 
@@ -4825,11 +4785,13 @@ export default function App() {
                 background: activeTheme.page,
                 cursor: 'text',
                 transition: 'background 0.25s ease',
-                /* NOUVEAU : Le padding est maintenant sur le conteneur parent */
-                padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'normal' ? '40px 64px' : marginSize === 'large' ? '40px 80px' : '40px 100px',
+                padding: '40px 300px',
               }}
               onClick={(e) => {
-                // ... (ne touchez pas au code du onClick)
+                if (e.target === e.currentTarget && editorRef.current) {
+                  editorRef.current.focus();
+                  placeCaret(editorRef.current, true);
+                }
               }}
             >
               <div
@@ -4839,11 +4801,11 @@ export default function App() {
                 contentEditable={!!activeTab}
                 suppressContentEditableWarning
                 onContextMenu={handleEditorContextMenu}
-                // ... (ne touchez pas aux événements)
+                onMouseMove={handleEditorMouseMove}
+                onMouseDown={handleEditorMouseDown}
                 style={{
                   flex: 1,
                   minHeight: '100%',
-                  /* SUPPRIMÉ : padding retiré d'ici */
                   outline: 'none',
                   fontSize: `${EDITOR_FONT_SIZE}px`,
                   zoom: (zoomPercent / 100) * 1.15,
