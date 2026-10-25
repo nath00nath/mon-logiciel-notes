@@ -4790,9 +4790,13 @@ export default function App() {
                 padding: isSidebarOpen ? '40px 150px' : '40px 250px',
               }}
               onClick={(e) => {
+                const selection = window.getSelection();
                 if (e.target === e.currentTarget && editorRef.current) {
-                  editorRef.current.focus();
-                  placeCaret(editorRef.current, true);
+                  // NOUVEAU : On ne force le curseur à la fin que s'il n'y a pas de sélection en cours
+                  if (!selection || selection.isCollapsed) {
+                    editorRef.current.focus();
+                    placeCaret(editorRef.current, true);
+                  }
                 }
               }}
             >
