@@ -857,6 +857,10 @@ const GLOBAL_CSS = `
   @keyframes noteIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes btnPop { 0% { transform: scale(0.85); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
+  .note-editor, .note-editor * {
+    caret-color: var(--caret-theme-color) !important;
+  }
+
   .note-editor {
     animation: noteIn 0.4s var(--ease);
     -webkit-font-smoothing: antialiased;
