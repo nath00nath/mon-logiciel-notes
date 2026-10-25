@@ -880,7 +880,7 @@ const GLOBAL_CSS = `
   }
   .note-editor h1, .note-editor h2, .note-editor h3, .note-editor p, .note-editor div {
     margin: 0 0 0.4em 0 !important;
-    line-height: 1.25 !important;
+    line-height: inherit !important; /* Permet d'hériter de la hauteur de ligne du conteneur parent */
     display: block;
     color: var(--text-color);
   }
