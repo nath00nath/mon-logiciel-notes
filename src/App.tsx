@@ -880,9 +880,19 @@ const GLOBAL_CSS = `
   }
   .note-editor h1, .note-editor h2, .note-editor h3, .note-editor p, .note-editor div {
     margin: 0 0 0.4em 0 !important;
-    line-height: 1.3 !important;
+    line-height: 1.25 !important;
     display: block;
     color: var(--text-color);
+  }
+  .note-editor p, .note-editor div { font-size: 16px; }
+  .note-editor h1 { font-size: 28px; }
+  .note-editor h2 { font-size: 22px; }
+  .note-editor h3 { font-size: 18px; }
+
+  /* Forcer les cellules de tableaux en fond blanc permanent */
+  .note-editor table td, .note-editor table th {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
   }
   .note-editor p, .note-editor div { font-size: 16px; }
   .note-editor h1 { font-size: 28px; }
