@@ -2259,7 +2259,21 @@ export default function App() {
     if (range.collapsed) {
       let node: Node | null = range.startContainer;
       if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
-      if (node && node instanceof HTMLElement && node !== ed) {
+      
+      // Remonter jusqu'au bloc de base pour forcer la taille du curseur sur tout l'élément
+      let blockNode = node;
+      while (blockNode && blockNode !== ed && !['P', 'DIV', 'H1', 'H2', 'H3', 'LI', 'TD', 'TH'].includes((blockNode as HTMLElement).tagName)) {
+        blockNode = blockNode.parentNode;
+      }
+
+      if (blockNode && blockNode instanceof HTMLElement && blockNode !== ed) {
+        blockNode.style.fontSize = `${targetPx}px`;
+        
+        // Si on est sur une ligne vide, on s'assure qu'aucun <span> enfant ne garde une ancienne taille
+        if (blockNode.textContent?.trim() === '') {
+           blockNode.querySelectorAll('span').forEach(s => s.style.removeProperty('font-size'));
+        }
+      } else if (node && node instanceof HTMLElement && node !== ed) {
         node.style.fontSize = `${targetPx}px`;
       } else {
         const span = document.createElement('span');
