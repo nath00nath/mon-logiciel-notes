@@ -910,7 +910,7 @@ const GLOBAL_CSS = `
   .table-wrapper {
     display: block;
     overflow-x: auto;
-    margin: 18px 0;
+    margin: 0 0 18px 0; /* Remplacé : supprime la marge du haut, garde 18px en bas */
     user-select: none;
     clear: both;
     position: relative;
@@ -4824,23 +4824,12 @@ export default function App() {
                 position: 'relative',
                 background: activeTheme.page,
                 cursor: 'text',
-                transition: 'background 0.25s ease'
+                transition: 'background 0.25s ease',
+                /* NOUVEAU : Le padding est maintenant sur le conteneur parent */
+                padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'normal' ? '40px 64px' : marginSize === 'large' ? '40px 80px' : '40px 100px',
               }}
               onClick={(e) => {
-                if (editorRef.current) {
-                  editorRef.current.focus();
-                  if (!editorRef.current.innerHTML.trim()) {
-                    editorRef.current.innerHTML = '<p><br></p>';
-                  }
-                  if (e.target === e.currentTarget) {
-                    const sel = window.getSelection();
-                    const range = document.createRange();
-                    range.selectNodeContents(editorRef.current);
-                    range.collapse(false);
-                    sel?.removeAllRanges();
-                    sel?.addRange(range);
-                  }
-                }
+                // ... (ne touchez pas au code du onClick)
               }}
             >
               <div
@@ -4850,32 +4839,11 @@ export default function App() {
                 contentEditable={!!activeTab}
                 suppressContentEditableWarning
                 onContextMenu={handleEditorContextMenu}
-                onMouseMove={handleEditorMouseMove}
-                onMouseDown={handleEditorMouseDown}
-                onInput={() => {
-                  handleContentChange('typing');
-                }}
-                onKeyDown={(e) => {
-                  if ((e.ctrlKey || e.metaKey) && !e.altKey) {
-                    const k = e.key.toLowerCase();
-                    if (k === 'z') { e.preventDefault(); stepHistory(e.shiftKey ? 1 : -1); }
-                    else if (k === 'y') { e.preventDefault(); stepHistory(1); }
-                    else if (!e.shiftKey && (k === 'b' || k === 'i' || k === 'u')) {
-                      const command = k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline';
-                      formatText(e as unknown as ReactMouseEvent, command);
-                    }
-                    else if (e.shiftKey && (k === 'x' || k === 's')) {
-                      formatText(e as unknown as ReactMouseEvent, 'strikeThrough');
-                    }
-                    else if (!e.shiftKey && k === 'k') handleInsertLink(e);
-                  }
-                }}
-                onMouseUp={checkSelectionFormat}
-                onKeyUp={checkSelectionFormat}
+                // ... (ne touchez pas aux événements)
                 style={{
                   flex: 1,
                   minHeight: '100%',
-                  padding: marginSize === 'etroit' ? '24px 32px' : marginSize === 'normal' ? '40px 64px' : marginSize === 'large' ? '40px 80px' : '40px 100px',
+                  /* SUPPRIMÉ : padding retiré d'ici */
                   outline: 'none',
                   fontSize: `${EDITOR_FONT_SIZE}px`,
                   zoom: (zoomPercent / 100) * 1.15,
