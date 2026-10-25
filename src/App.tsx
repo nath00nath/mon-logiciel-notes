@@ -2036,7 +2036,23 @@ export default function App() {
     } else {
       const span = document.createElement('span');
       span.style.fontFamily = fontName;
-      span.appendChild(range.extractContents());
+      
+      // Extraction du texte sélectionné
+      const contents = range.extractContents();
+      
+      // NOUVEAU : Nettoyer les styles "font-family" forcés par Google Docs ou d'autres éditeurs
+      contents.querySelectorAll('*').forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.style.removeProperty('font-family');
+          if (el.tagName === 'FONT') el.removeAttribute('face');
+          // Nettoyer les attributs style vides pour garder un HTML propre
+          if (el.getAttribute('style')?.trim() === '') {
+            el.removeAttribute('style');
+          }
+        }
+      });
+
+      span.appendChild(contents);
       range.insertNode(span);
 
       const newRange = document.createRange();
