@@ -4787,14 +4787,25 @@ export default function App() {
                 /* NOUVEAU : Animation fluide du padding en même temps que le panneau */
                 transition: 'background 0.25s ease, padding 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                 /* NOUVEAU : 150px quand le menu est ouvert, 250px quand il est fermé */
-                padding: isSidebarOpen ? '40px 150px' : '40px 250px',
+                padding: isSidebarOpen ? '40px 170px' : '40px 250px',
               }}
               onClick={(e) => {
+                const sel = window.getSelection();
+                
+                // Protection absolue : si l'utilisateur a surligné une plage de texte (Range), on ne touche à rien
+                if (sel && sel.type === 'Range') return;
+
                 if (e.target === e.currentTarget && editorRef.current) {
-                  const selection = window.getSelection();
-                  // VÉRIFICATION STRICTE : S'il y a le moindre texte sélectionné, on ne touche à rien !
-                  if (!selection || selection.toString().length === 0) {
-                    editorRef.current.focus();
+                  editorRef.current.focus();
+                  
+                  // Détection de la position de la souris
+                  const rect = editorRef.current.getBoundingClientRect();
+                  
+                  // Si on clique dans la marge du haut (près du titre), on place le curseur tout au début
+                  if (e.clientY < rect.top + 60) {
+                    placeCaret(editorRef.current, false);
+                  } else {
+                    // Si on clique ailleurs dans les grandes marges, on place le curseur à la fin
                     placeCaret(editorRef.current, true);
                   }
                 }
