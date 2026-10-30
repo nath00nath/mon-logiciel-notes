@@ -4787,7 +4787,8 @@ export default function App() {
                 /* NOUVEAU : Animation fluide du padding en même temps que le panneau */
                 transition: 'background 0.25s ease, padding 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                 /* NOUVEAU : 150px quand le menu est ouvert, 250px quand il est fermé */
-                padding: isSidebarOpen ? '40px 125px' : '40px 250px',
+                padding: '40px 24px',
+                alignItems: 'center',
               }}
               onClick={(e) => {
                 const sel = window.getSelection();
@@ -4821,17 +4822,19 @@ export default function App() {
                 onMouseMove={handleEditorMouseMove}
                 onMouseDown={handleEditorMouseDown}
                 style={{
-                  flex: 1,
-                  minHeight: '100%',
-                  outline: 'none',
-                  fontSize: `${EDITOR_FONT_SIZE}px`,
-                  zoom: (zoomPercent / 100) * 1.15,
-                  lineHeight: lineHeight,
-                  color: activeTheme.text,
-                  textAlign: 'left',
-                  direction: 'ltr',
-                  fontFamily: "'IBM Plex Sans', sans-serif",
-                }}
+               flex: 1,
+                minHeight: '100%',
+                width: '100%',
+                maxWidth: '820px', // Largeur fixe de la feuille (type A4 / Google Docs)
+                outline: 'none',
+                fontSize: `${EDITOR_FONT_SIZE}px`,
+                zoom: (zoomPercent / 100) * 1.15,
+                lineHeight: lineHeight,
+                color: activeTheme.text,
+                textAlign: 'left',
+                direction: 'ltr',
+                fontFamily: "'IBM Plex Sans', sans-serif",
+               }}
               />
             </div>
           </div>
