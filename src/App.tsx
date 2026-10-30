@@ -4787,7 +4787,7 @@ export default function App() {
                 /* NOUVEAU : Animation fluide du padding en même temps que le panneau */
                 transition: 'background 0.25s ease, padding 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                 /* NOUVEAU : 150px quand le menu est ouvert, 250px quand il est fermé */
-                padding: isSidebarOpen ? '40px 170px' : '40px 250px',
+                padding: isSidebarOpen ? '40px 130px' : '40px 250px',
               }}
               onClick={(e) => {
                 const sel = window.getSelection();
